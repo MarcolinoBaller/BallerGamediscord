@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ballèr Quest: Il Certificato Ballèr</title>
+
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0a0612; color: #fff; font-family: "Trebuchet MS", Arial, sans-serif; overflow: hidden; touch-action: none; }
+#wrap { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+canvas { width: min(100vw, calc(100vh * 16 / 9)); height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; background: #000; display: block; }
+.hidden { display: none !important; }
+
+#topBtns { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 5; }
+#topBtns button { width: 44px; height: 44px; font-size: 20px; border-radius: 8px; border: 2px solid #ffd34d; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; }
+
+#touch { position: absolute; bottom: 12px; left: 0; right: 0; display: none; justify-content: space-between; padding: 0 16px; z-index: 5; pointer-events: none; }
+#touch .tgroup { display: flex; gap: 14px; pointer-events: auto; }
+#touch button { width: 70px; height: 70px; border-radius: 50%; border: 3px solid rgba(255,255,255,.7); background: rgba(0,0,0,.4); color: #fff; font-size: 26px; font-weight: bold; user-select: none; -webkit-user-select: none; }
+@media (pointer: coarse) { #touch { display: flex; } }
+
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(5,3,15,.78); z-index: 10; }
+.panel { background: #1b1030; border: 4px solid #ffd34d; border-radius: 12px; padding: 24px 32px; text-align: center; max-width: 92vw; box-shadow: 0 0 40px #ff8a3d66; }
+.panel h1 { margin: 0; font-size: clamp(28px, 6vw, 56px); color: #ffd34d; text-shadow: 4px 4px 0 #b3361b; letter-spacing: 2px; }
+.panel h2 { margin: 6px 0 18px; color: #ffb36b; }
+.panel button { display: block; width: 260px; max-width: 70vw; margin: 10px auto; padding: 12px; font-size: 18px; font-weight: bold; border: 3px solid #ffd34d; border-radius: 8px; background: #3a1f5e; color: #fff; cursor: pointer; }
+.panel button:hover:not(:disabled), .panel button:focus { background: #ff8a3d; color: #1b1030; outline: none; }
+.panel button:disabled { opacity: .35; cursor: not-allowed; }
+.panel ul { text-align: left; line-height: 1.8; font-size: 17px; }
+.small { font-size: 12px; opacity: .65; }
+
+#cert { background: radial-gradient(circle, rgba(255,210,90,.55), rgba(40,20,0,.92)); }
+.scroll { position: relative; width: min(720px, 94vw); max-height: 94vh; overflow: auto; padding: 34px 40px; text-align: center; color: #3b2208;
+  background: linear-gradient(#f6e3b4, #ecd08c 50%, #f6e3b4); border-radius: 18px; border: 6px double #8a5a1c; box-shadow: 0 0 60px #ffd34d, inset 0 0 40px #b8873a; font-family: Georgia, serif; }
+.scroll h1 { font-size: clamp(30px, 6vw, 54px); margin: 6px 0; color: #8a1c1c; text-shadow: 2px 2px 0 #ffd34d; letter-spacing: 3px; }
+.scroll .who { font-size: 28px; font-weight: bold; font-style: italic; margin: 6px 0; }
+.scroll .sub { margin: 6px 0; }
+.scroll table { margin: 14px auto; border-collapse: collapse; font-size: 17px; }
+.scroll td { padding: 4px 14px; border-bottom: 1px dashed #8a5a1c; }
+.scroll td:last-child { font-weight: bold; text-align: right; }
+.scroll .sign { font-style: italic; margin-top: 10px; }
+.seal { position: absolute; top: 14px; right: 18px; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(#ffe27a, #c9921c); border: 4px solid #8a5a1c; font: bold 38px Georgia, serif; line-height: 56px; color: #6b3f05; transform: rotate(-12deg); }
+.cbtns button { margin: 8px; padding: 12px 18px; font-size: 17px; font-weight: bold; border-radius: 8px; border: 3px solid #8a5a1c; background: #8a1c1c; color: #ffe9b0; cursor: pointer; }
+
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="540" aria-label="Ballèr Quest"></canvas>
+
+  <div id="topBtns">
+    <button id="btnAudio" title="Audio on/off">🔊</button>
+    <button id="btnPause" title="Pausa (Esc)">⏸</button>
+  </div>
+
+  <div id="touch">
+    <div class="tgroup">
+      <button data-k="left">◀</button>
+      <button data-k="right">▶</button>
+    </div>
+    <div class="tgroup">
+      <button data-k="interact">E</button>
+      <button data-k="jump">⤒</button>
+    </div>
+  </div>
+
+  <div id="menu" class="overlay">
+    <div class="panel">
+      <h1>BALLÈR QUEST</h1>
+      <h2>Il Certificato Ballèr</h2>
+      <button id="mNew">Nuova partita</button>
+      <button id="mCont">Continua</button>
+      <button id="mCtrl">Comandi</button>
+      <button id="mDel">Cancella salvataggio</button>
+      <p class="small">Contenuti volgari e satirici. Personaggi fittizi.</p>
+    </div>
+  </div>
+
+  <div id="controls" class="overlay hidden">
+    <div class="panel">
+      <h2>Comandi</h2>
+      <ul>
+        <li><b>← → / A D</b> — muoviti</li>
+        <li><b>Spazio / W / ↑</b> — salta (tieni premuto per saltare più in alto)</li>
+        <li><b>E</b> — interagisci</li>
+        <li><b>Invio / Spazio</b> — avanza nei dialoghi, <b>↑ ↓</b> scegli</li>
+        <li><b>Esc</b> — pausa</li>
+        <li><b>Jetpack</b> — tieni premuto SALTO mentre sei in aria</li>
+      </ul>
+      <button id="cBack">Indietro</button>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2>Pausa</h2>
+      <button id="pResume">Riprendi</button>
+      <button id="pMenu">Menu principale</button>
+    </div>
+  </div>
+
+  <div id="cert" class="overlay hidden">
+    <div class="scroll">
+      <div class="seal">B</div>
+      <h1>CERTIFICATO BALLÈR</h1>
+      <p class="sub">Si certifica solennemente che</p>
+      <p class="who">Nuovo Ballèr certificato</p>
+      <p class="sub">ha raccolto Ballèr Coins, sopportato monologhi, spritz e furti,<br>dimostrando ballerità oltre ogni ragionevole dubbio.</p>
+      <table id="certStats"></table>
+      <p class="sign">firmato: Marcolino, Gran Maestro dei Ballèr</p>
+      <div class="cbtns">
+        <button id="certCont">Continua a esplorare</button>
+        <button id="certRestart">Ricomincia</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   BALLÈR QUEST — IL CERTIFICATO BALLÈR
+   dialoghi.js — TUTTI i testi del gioco in un unico oggetto dati.
+   Modifica qui per cambiare le battute: il resto del codice non va toccato.
+   ========================================================================== */
+
+const DIALOGHI = {
+
+  /* ---------------------------------------------------------------- FAZ */
+  faz: {
+    nome: "FAZ",
+    ritratto: "faz",
+    blocca: true,
+    righe: [
+      "zì se vai avanti, so problemi tua. Io non ne vojo sapè niente.",
+      "Io t'ho avvisato. Vai, vai... tanto chi se ne fotte, mica è casa mia.",
+    ],
+  },
+
+  /* ------------------------------------------------------------ ALADINO */
+  aladino: {
+    nome: "ALADINO",
+    ritratto: "aladino",
+    blocca: true,
+    scelte: true,
+    primaChiamata: ["fratè fermate, vieni a fare due chiacchiere"],
+    monologo: [
+      { t: "LA JUVE DEGLI ULTIMI ANNI: UN DISASTRO ANNUNCIATO", titolo: true },
+      { t: "Aò, ma famo a capisse: la Juventus degli ultimi tre o quattro anni è diventata una roba inspiegabile. Una squadra che dovrebbe magnasse il campionato a colazione e invece scende in campo che pare stia facendo un favore a chi paga il biglietto. Nun se po' vede', regà. Una volta la Juve entrava in campo e gli avversari se cagavano sotto, adesso a momenti so' i bianconeri che chiedono scusa prima del fischio d'inizio." },
+      { t: "E sapete qual è il problema? Che qua se so' accumulati anni de scelte discutibili, prestazioni imbarazzanti e progetti che sembrano scritti su un tovagliolo al bar. E in mezzo a tutto sto casino ci stanno tre nomi che meritano un discorso bello pesante: Allegri, Locatelli e Spalletti." },
+      { t: "Partimo da Allegri, er maestro der corto muso." },
+      { t: "Mamma mia, Max. Ma che avemo visto in questi anni? Partite in cui la Juve sembrava avere paura pure de superà la metà campo. Difesa bassa, passaggetto all'indietro, pallone al portiere e speramo che succeda qualcosa. Ma che è, calcio o na seduta de meditazione?" },
+      { t: "Allegri pareva convinto che bastasse mette undici cristiani in campo, digli de soffrì e aspettà che Vlahovic se inventasse un gol dal nulla. Ma porca miseria, se c'hai una squadra forte, devi giocà a pallone, mica aspettà che te caschi la Madonna dal cielo!" },
+      { t: "Ogni partita era la stessa storia: se vincevi uno a zero, era gestione; se pareggiavi, era equilibrio; se perdevi, era colpa degli episodi. A Max, ma ogni tanto dì semplicemente che avemo giocato de merda! Nun succede niente!" },
+      { t: "E poi la crescita dei giocatori? Boh. Attaccanti isolati, centrocampo che costruiva con la velocità de un trattore senza benzina e tifosi che dopo venti minuti già stavano a bestemmia' sul divano." },
+      { t: "MÀ NON È IL MOMENTO! ESCI!", urlo: true },
+      { t: "Perché quando pensavi che la partita potesse finalmente decollare, arrivava puntuale il passaggio laterale numero quarantasette. Ma annamo, regà! Allegri aveva esperienza, aveva vinto tanto e conosceva l'ambiente, ma il suo secondo ciclo ha dimostrato che il passato nun te garantisce er futuro. E infatti, alla fine, la sua avventura è terminata nel maggio 2024." },
+      { t: "E meno male che dovevamo ripartì!" },
+      { t: "Poi però arriva Manuel Locatelli, e qua se apre n'artro capitolo." },
+      { t: "Manuel, te vojo bene, ma a un certo punto bisogna pure esse sinceri. La Juventus ha bisogno di un centrocampo che comanda le partite, non de uno che ogni tanto pare stia cercando l'uscita de sicurezza mentre c'ha il pallone tra i piedi." },
+      { t: "Il problema è che spesso la manovra sembra bloccata. Palla a Locatelli, passaggio corto, palla indietro, ripartiamo da capo. E intanto gli avversari se sistemano, se fanno un caffè e aspettano tranquillamente che la Juve trovi un'idea." },
+      { t: "Ma un passaggio verticale ogni tanto? Un pallone che spacca le linee? Na giocata che faccia dì: «Aò, questo è un centrocampista della Juventus!»?" },
+      { t: "Perché il capitano deve esse un riferimento, deve prende per mano la squadra quando le cose vanno male. Nun basta corre, recuperà palloni e fa er bravo ragazzo. Serve pure qualità, personalità e capacità de cambià la partita." },
+      { t: "E attenzione, perché nun sto dicendo che Locatelli sia l'unico problema del centrocampo. Sarebbe na cazzata. Ma se sei uno dei punti di riferimento della squadra, devi pure accettà che la gente te chieda qualcosa in più." },
+      { t: "MÀ NON È IL MOMENTO! ESCI!", urlo: true },
+      { t: "Questa è la frase che me immagino ogni volta che la Juve perde palla, l'avversario riparte e noi restamo fermi a guardà come se stessimo vedendo un documentario sui pinguini." },
+      { t: "E poi c'è Spalletti." },
+      { t: "Aò, Luciano, mo tocca a te." },
+      { t: "Sei arrivato con la fama de allenatore capace de dare un'identità alle squadre, de organizzà il gioco e de valorizzà i giocatori. E allora fammela vede', sta benedetta identità! Perché la Juventus nun può continuà a cambià allenatore e ritrovasse ogni volta co' gli stessi problemi." },
+      { t: "Spalletti deve prende le responsabilità delle proprie scelte: formazioni, cambi, tattica e gestione delle partite. Certo, ha ereditato una situazione complicata, mica ha creato lui tutti i problemi degli anni precedenti. Però a un certo punto bisogna portà risultati, non soltanto spiegazioni." },
+      { t: "E dopo una sconfitta pesante come il 3-0 contro la Lazio del 19 ottobre 2026, le domande diventano inevitabili. Ma come fai a prende tre gol in casa e nun riuscì a trovà na reazione convincente? Dove sta la cattiveria? Dove sta l'orgoglio? Dove sta quella Juve che, pure quando giocava male, riusciva almeno a fa paura?" },
+      { t: "MÀ NON È IL MOMENTO! ESCI!", urlo: true },
+      { t: "Perché qua ogni volta che sembra arrivata la svolta, succede qualcosa che riporta tutti sulla Terra. Una partita buona, due pareggi, una sconfitta assurda e ricominciamo da capo. Ma che è, 'na giostra?" },
+      { t: "E la cosa più frustrante è che ognuno sembra avere sempre una spiegazione pronta. Manca il tempo, manca la fiducia, manca la condizione, manca questo, manca quello." },
+      { t: "A regà, manca pure che famo una partita decente per novanta minuti!" },
+      { t: "La verità è che Allegri ha lasciato una Juventus che per lunghi periodi sembrava aver rinunciato a sviluppare un calcio moderno e propositivo. Locatelli deve dimostrare di poter essere un centrocampista più incisivo, capace di guidare davvero il reparto. Spalletti, invece, deve trasformare le proprie idee in risultati concreti, perché la pazienza dei tifosi nun è infinita." },
+      { t: "E sapete qual è il punto? Che la Juventus non può campà de rendita sulla propria storia." },
+      { t: "Nun me interessa se c'hai vinto cinque scudetti dieci anni fa. Nun me interessa se sei considerato un grande allenatore. Nun me interessa se sei il capitano e lavori tanto durante la settimana." },
+      { t: "Quando entri in campo co' quella maglia, devi dimostrà che te la meriti. Perché noi tifosi ce semo rotti le scatole de vedé partite in cui l'avversario sembra più affamato, più organizzato e più convinto de noi. Ce semo rotti de aspettà ogni anno la rinascita definitiva. Ce semo rotti de sentì che «la prossima sarà quella buona»." },
+      { t: "MA QUANDO CAZZO ARRIVA 'STA PROSSIMA VOLTA?!", urlo: true },
+      { t: "La Juve deve tornà a esse una squadra che aggredisce le partite, che gioca con personalità e che quando va in vantaggio cerca pure de raddoppià, invece de chiudesse in difesa come se dovesse protegge er tesoro de Jack Sparrow." },
+      { t: "E soprattutto deve smette de fa sentì il tifoso come un cojone che continua a crede alle promesse mentre sul campo vede sempre gli stessi difetti." },
+      { t: "Allegri doveva evolversi. Locatelli deve alzare il livello. Spalletti deve dimostrare che il suo progetto funziona. Nessuno dei tre può essere considerato automaticamente esente da critiche." },
+      { t: "Poi, certo, le responsabilità sono anche societarie e riguardano la costruzione della rosa. Ma oggi stamo a parlà de loro, quindi famoli lavorà e famoli risponde in campo!" },
+      { t: "Perché la Juventus non deve esse perfetta ogni domenica. Deve però esse riconoscibile, affamata e capace de reagì alle difficoltà." },
+      { t: "E se perdi, almeno famme vede' che hai dato tutto. Se pareggi, famme vede' che hai cercato de vincere. Se giochi male, cambia qualcosa, inventate un piano, fai una sostituzione coraggiosa, prova a sorprendere l'avversario." },
+      { t: "Ma nun me fa' novanta minuti de passaggi all'indietro e poi vieni a raccontamme che è mancata la lucidità, mannaggia tutto!" },
+      { t: "MÀ NON È IL MOMENTO! ESCI!", urlo: true },
+      { t: "E allora chiudemo sto discorso come se chiacchierassimo fuori dallo stadio, co' l'amico che ormai c'ha la vena sulla fronte che sta per esplode." },
+      { t: "Allegri, grazie per quello che hai vinto in passato, ma il tuo secondo ciclo ha lasciato troppe domande irrisolte." },
+      { t: "Locatelli, sei un giocatore importante, ma devi dimostrare de poter trascinà davvero il centrocampo della Juventus." },
+      { t: "Spalletti, hai il compito de ridare un'identità a sta squadra, e adesso servono risposte, perché le chiacchiere se le porta via er vento." },
+      { t: "E alla società dico: basta co' 'sti progetti senza fine. Costruite una squadra seria, scegliete una direzione e datele continuità." },
+      { t: "Perché noi nun chiedemo la Champions ogni anno, nun chiedemo de vince sempre quattro a zero e nun pretendemo de dominà ogni avversario." },
+      { t: "Chiedemo soltanto una Juventus che giochi da Juventus." },
+      { t: "Una squadra che lotta, che corre, che se prende le responsabilità e che nun se nasconde dietro agli alibi." },
+      { t: "E se proprio dobbiamo perde, almeno evitate de facce venì voglia de spegne la televisione al ventesimo minuto." },
+      { t: "Perché, aò, SEMO LA JUVE, MICA ER DOPO-LAVORO AZIENDALE!", urlo: true },
+      { t: "E mo annate in campo, tirate fuori gli attributi e fatece vede' qualcosa de decente." },
+      { t: "Che qua stamo finiti tutti i santi del calendario." },
+      { t: "MÀ NON È IL MOMENTO! ESCI!", urlo: true },
+    ],
+    // indici (nel monologo) dopo i quali parte la finta possibilità di interruzione
+    scelteFasulle: [16, 33],
+    testoScelta: "Vuoi interrompere Aladino?",
+    opzioni: ["Sì", "No"],
+    repliche: [
+      "No amico, nun te la cavi così. Sei entrato nella zona narrativa, mo te la senti tutta.",
+      "Ah, bella mossa. Ancora non hai capito che qua se parla solo io? Continuamo.",
+    ],
+    fine: ["Mo statte zitto e va avanti. E dì che t'ho insegnato qualcosa."],
+  },
+
+  /* -------------------------------------------------------- TONY E CONSY */
+  tonyConsy: {
+    nome: "TONY",
+    ritratto: "tony",
+    blocca: true,
+    scelte: true,
+    primaChiamata: ["vieni a farti qualche game su marvel rivals?"],
+    righe: [
+      "FAI CAGARE GAY",
+    ],
+    testoScelta: "Tony ti fissa. Che fai?",
+    opzioni: ["va bene tony", "stai zitto pelato"],
+    dopoScelta: [
+      "MA LECCAMI IL FIDDLESTICK COGLIONE AHAHAHHA",
+    ],
+    consy: "mazza questi però erano bravi che je voi dì",
+    tonyFine: "ora vado che faccio una bella cacatona e si va a letto",
+    consyFinale: "ᵃᵒ ᵐᵃ ᶜʰᵉ ᶜᵃᶻᶻᵒ ˢᵗᵃᵐᵒ ᶠᵃᶜᵉⁿⁿᵒ ᑫᵘᵃ",
+  },
+
+  /* -------------------------------------------- KESOR, 71, POLLO, JUSTSCIV */
+  salotto: {
+    kesor:   { nome: "KESOR",   ritratto: "kesor",   blocca: true, righe: ["abbiamo cose più importanti delle tue cazzate"] },
+    pollo:   { nome: "POLLO",   ritratto: "pollo",   blocca: true, righe: ["Porca Madonna taci che sacramento fa più schifo del Parma di D'Aversa"] },
+    justsciv:{ nome: "JUSTSCIV",ritratto: "justsciv",blocca: true, righe: ["non ci credo dimme te se con sto Godmon dovevò becca l'npc con Ninjask Zio pera"] },
+    q71:     { nome: "71",      ritratto: "q71",     blocca: true, righe: ["Ao ma chi è sta cucciolina che hanno inquadrato mamma mia"] },
+    telecronaca: [
+      "e la palla va in angolo, signori che difesa",
+      "MANI! MANI! fallo netto!",
+      "oh ma sto arbitro è un cecato",
+    ],
+  },
+
+  /* ----------------------------------------------------------- TROMBIZIO */
+  trombizio: {
+    nome: "TROMBIZIO",
+    ritratto: "trombizio",
+    blocca: true,
+    righe: [
+      "Hey! hai dei bonus per me? Sono Trombizio!",
+      "sono miei di diritto. li farò fruttare rubando i bonus. ora sparisci Goy prima che chiami zio Bibi!",
+    ],
+    righeDopo: [
+      "te l'ho già detto, i bonus so' finiti. vattene, Goy.",
+      "nun torna più qua, che zio Bibi nun risponde ar telefono pe' ste cose.",
+    ],
+    moneteRuba: 10,
+  },
+
+  /* ------------------------------------------------------------- BBQ */
+  bbq: {
+    nome: "UOMO DEL BBQ",
+    ritratto: "bbq",
+    blocca: true,
+    righe: ["MINKIA MBARE ASSAGGIA STI PUPPETT RI CAVADDRU LA MORTE SUA SONO AAH"],
+    dopoMangiato: ["MINKIA CARUSO GRAZIE, M'ARRICRIAI"],
+    righeSfame: ["t'ho già dato tutto quello che avevo, mbare. nun me rompere."],
+  },
+
+  /* --------------------------------------------------------- SFONDO */
+  sfondo: {
+    nome: "???",
+    urlo: "ALL'INFERNO PORCODIOBASTARDO, PERIODO NEGATIVO TROPPO SFORTUNATO, RISORGERO! PERO HO IL MOTORINO DAI! STRONZI E RAZZISTI!",
+  },
+
+  /* ---------------------------------------------------------- PADDONE */
+  paddone: {
+    nome: "PADDONE",
+    ritratto: "paddone",
+    blocca: true,
+    chiamata: "Hey, vuoi delle giacche? prezzi buoni!",
+    giacche: ["Giacca tamarra finta pelle", "Bomber con toppe a caso", "Piumino che sa di cantina"],
+    prezzo: 130,
+    rifiuto: "va bhè tranquillo, conta che tanti capi li hanno rubati i miei amici della curva e son successi casini, alcuni hanno iniziato a menarsi e nel frattempo è passato un maranza quindi messo subito mano sul coltello che tenevo in tasca, va bhe lascia stare tu occasionale non sai neanche di cosa parlo...",
+    nonTiBastano: "nun c'hai manco i soldi pe' una toppa, occasionale.",
+  },
+
+  /* ---------------------------------------------------------- SPRITZ */
+  spritz: {
+    nome: "SPACCINO",
+    ritratto: "spaccino",
+    blocca: true,
+    chiamata: "MONA DIOCAN VE CHI CHE BEVEMO NO SPRISS DIO CAN",
+    beve: [
+      "uno.",
+      "due.",
+      "tre.",
+      "quattro.",
+      "cinque. e mo stamo a posto così.",
+    ],
+    urlo: ["MEZZA SEGA DIOCAN! VERGOGNET!"],
+    eddie: "Eddie: aò tieniti forte che la strada gira, nun me vomità sul giubbotto.",
+  },
+
+  /* ------------------------------------------------------------ SHYDE */
+  shyde: {
+    nome: "SHYDE",
+    ritratto: "shyde",
+    blocca: true,
+    chiamata: "fra, prova sto smashburger che t'apre il cuore",
+    parolaRusso: ["Da, papushka, davai!", "Aha, khorosho druzhok!", "Nyet problem, molodets!"],
+    dopoMangiato: "ecco, mo stai dritto. te vedo un po' meno sfasato.",
+    opzioneFinale: ["vabbè questo è un disperato, famo che me ne vado"],
+  },
+
+  /* --------------------------------------------------------- MARCOLINO */
+  marcolino: {
+    nome: "MARCOLINO",
+    ritratto: "marcolino",
+    blocca: true,
+    grida: "BALLER BALLER! UN NUOVO BALLER!",
+    casoA: [
+      "fermo fermo. nun sei ancora un Ballèr.",
+      "te mancano ANCORA delle monete accessibili. Cerca in giro, sui tetti bassi e nelle viuzze.",
+      "e nun provà a scoraggiarti: le monete che nun te servono so' quelle in alto, e quelle te le darò io quando te meriti er zaino.",
+    ],
+    casoB: [
+      "VEDI? Sei quasi un Ballèr.",
+      "Te mancano solo LE DUE monete in quota: quelle lì in alto, sopra l'impalcatura, che t'ho fatto vede' apposta all'inizio.",
+      "Tieni sto JETPACK. Tieni premuto SALTO mentre sei in aria e voli. Carburante infinito, nun te preoccupà.",
+      "Torna indietro lungo la mappa, prendi le due monete e poi vieni qua da me con almeno 100 monete in tasca.",
+    ],
+    casoC: [
+      "BALLER! BALLER! UN NUOVO BALLER!",
+      "Sei arrivato a cento monete possedute. Er Certificato Ballèr è tuo.",
+    ],
+    casoCPost: [
+      "Statte fermo che te lo timbro. Tieni, ora sei ufficialmente un Ballèr.",
+      "Nun me interessa se hai fatto tutto in fretta o strisciando, se hai bevuto cinque spritz o se t'hanno derubato: er certificato è certificato.",
+    ],
+  },
+};
+
+</script>
+<script>
+/* ==========================================================================
+   BALLÈR QUEST — IL CERTIFICATO BALLÈR
+   game.js — motore di gioco (Canvas 2D, nessuna dipendenza esterna).
+
+   ARCHITETTURA
+   ---------------------------------------------------------------------
+   - Save       : salvataggio su localStorage
+   - Audio      : effetti sintetizzati con Web Audio API
+   - Input      : tastiera + pulsanti touch
+   - Level      : la mappa (zone, terreno, piattaforme, decorazioni)
+   - Entita     : Player, NPC, Monete, Pericoli (auto, pedoni, buche)
+   - Dialoghi   : macchina a stati che legge da DIALOGHI (dialoghi.js)
+   - Camera/Wire : effetti di luce, spritz, sfocatura
+   - HUD        : vita, monete, obiettivo, jetpack
+   - Game       : loop, collisioni, progressione narrativa
+   ========================================================================== */
+'use strict';
+
+/* ========================================================================
+   1. COSTANTI E UTILITY
+   ======================================================================== */
+const VIEW_W = 960, VIEW_H = 540;
+const PX = 3.2;                 // scala pixel-art (1 unità logica = 3.2 px)
+const GRAV = 0.55;
+const MAX_FALL = 14;
+const RUN_ACC = 0.85, RUN_MAX = 5.2, AIR_ACC = 0.6, FRICTION = 0.82;
+const JUMP_V = -12.2;
+const COYOTE = 10, JUMP_BUFFER = 11;
+const MAX_HP = 100;
+const MONETE_TOTALI = 110;
+const MAP_END = 14200;
+const SUOLO = 470;        // quota del marciapiede: unico riferimento del disegno
+const SAVE_KEY = 'ballerQuestSave_v1';
+
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+/* ========================================================================
+   2. SAVE MANAGER
+   ======================================================================== */
+const Save = {
+  vuoto() {
+    return {
+      cpX: 620, cpY: 0, hp: MAX_HP, raccolte: {}, possesso: 0,
+      trombizio: false, dialoghiCompletati: {}, jetpack: false, certificato: false,
+      audio: true, danni: 0, npc: [], tempo: 0, morti: 0, moneteWorld: 0, mc: 0, v: 1
+    };
+  },
+  carica() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      return Object.assign(this.vuoto(), s);
+    } catch (e) { return null; }
+  },
+  salva(stato) {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(stato)); } catch (e) { }
+  },
+  cancella() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } },
+  esiste() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+};
+
+/* ========================================================================
+   3. AUDIO MANAGER
+   ======================================================================== */
+const Audio2 = {
+  ctx: null, on: true,
+  init() {
+    if (this.ctx) return;
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; }
+  },
+  beep(freq, dur, type, vol, slide) {
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, slide), t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol === undefined ? .12 : vol, t + .01);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  moneta() { this.beep(880, .09, 'square', .10); setTimeout(() => this.beep(1320, .12, 'square', .09), 60); },
+  salto() { this.beep(300, .14, 'sine', .10, 620); },
+  danno() { this.beep(180, .22, 'sawtooth', .14, 70); },
+  dialogo() { this.beep(520, .05, 'square', .06); },
+  cura() { this.beep(600, .18, 'sine', .10, 1100); },
+  furto() { for (let i = 0; i < 5; i++) setTimeout(() => this.beep(900 - i * 120, .07, 'square', .09), i * 55); },
+  jetpack() { this.beep(140, .35, 'sawtooth', .09, 420); },
+  certificato() {
+    [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.beep(f, .28, 'triangle', .12), i * 170));
+  }
+};
+
+/* ========================================================================
+   4. INPUT MANAGER
+   ======================================================================== */
+const Input = {
+  tasti: {}, tastiPremuti: {}, touch: { left: 0, right: 0, jump: 0, interact: 0 },
+  qualsiasi: false, clickOra: false,
+  init() {
+    addEventListener('keydown', e => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+      if (!this.tasti[e.code]) this.tastiPremuti[e.code] = true;
+      this.tasti[e.code] = true;
+      this.qualsiasi = true;               // qualunque tasto fa avanzare i dialoghi
+      Audio2.init();
+    });
+    addEventListener('keyup', e => { this.tasti[e.code] = false; });
+    addEventListener('blur', () => { this.tasti = {}; });
+    // click o tocco sullo schermo: avanza i dialoghi e non blocca mai
+    addEventListener('mousedown', e => { this.clickOra = true; Audio2.init(); });
+    addEventListener('touchstart', e => { this.clickOra = true; Audio2.init(); }, { passive: true });
+
+    document.querySelectorAll('#touch [data-k]').forEach(btn => {
+      const k = btn.dataset.k;
+      const on = e => { e.preventDefault(); if (!this.touch[k]) { if (k === 'interact') { this.tastiPremuti.KeyE = true; this.qualsiasi = true; } if (k === 'jump') { this.tastiPremuti.Space = true; } } this.touch[k] = 1; Audio2.init(); };
+      const off = e => { e.preventDefault(); this.touch[k] = 0; };
+      btn.addEventListener('touchstart', on, { passive: false });
+      btn.addEventListener('touchend', off, { passive: false });
+      btn.addEventListener('touchcancel', off, { passive: false });
+      btn.addEventListener('mousedown', on);
+      btn.addEventListener('mouseup', off);
+      btn.addEventListener('mouseleave', off);
+    });
+  },
+  get sinistra() { return !!(this.tasti.ArrowLeft || this.tasti.KeyA || this.touch.left); },
+  get destra() { return !!(this.tasti.ArrowRight || this.tasti.KeyD || this.touch.right); },
+  get salto() { return !!(this.tasti.Space || this.tasti.KeyW || this.tasti.ArrowUp || this.touch.jump); },
+  get interagisci() { return !!(this.tasti.KeyE || this.touch.interact); },
+  get avanti() { return !!(this.tasti.Enter || this.tasti.Space); },
+  get su() { return !!this.tasti.ArrowUp; },
+  get giu() { return !!this.tasti.ArrowDown; },
+  premiuto(code) { if (this.tastiPremuti[code]) { this.tastiPremuti[code] = false; return true; } return false; },
+  azzeraFrame() {
+    const k = Object.keys(this.tastiPremuti);
+    for (let i = 0; i < k.length; i++) if (!this.tasti[k[i]]) delete this.tastiPremuti[k[i]];
+    this.qualsiasi = false;
+    this.clickOra = false;
+  },
+  azzera() { this.tasti = {}; this.tastiPremuti = {}; }
+};
+
+/* ========================================================================
+   5. LIVELLO — geometria della mappa
+   ======================================================================== */
+const Level = {
+  ground: [],       // {x,y,w,h} blocchi solidi principali
+  platform: [],     // {x,y,w,h} piattaforme (solide da sopra)
+  muri: [],         // {x,y,w,h} ostacoli urbani solidi
+  buche: [],        // {x,w} zone di caduta
+  decor: [],
+  traps: [],        // {x,y,ty} ty: 'auto' | 'naso'
+  zone: [],
+
+  build() {
+    this.ground = []; this.platform = []; this.muri = []; this.buche = []; this.decor = []; this.traps = []; this.zone = [];
+
+    // --- terreno principale con qualche buco (mai mortale: sotto c'è terreno di recupero)
+    let x = -200;
+    const segmenti = [
+      [0, 2600], [2700, 3400], [3450, 5200], [5350, 6600], [6700, 8400],
+      [8500, 9800], [9900, 11200], [11300, 12600], [12700, 13400], [13500, MAP_END]
+    ];
+    segmenti.forEach(s => {
+      this.ground.push({ x: s[0], y: SUOLO, w: s[1] - s[0], h: 400 });
+    });
+    // buche visibili (cadere = danno + respawn al checkpoint, non morte istantanea)
+    this.buche = [
+      { x: 2600, w: 80 }, { x: 5200, w: 110 }, { x: 6600, w: 80 },
+      { x: 8400, w: 80 }, { x: 9800, w: 80 }, { x: 11200, w: 80 },
+      { x: 12600, w: 80 }, { x: 13400, w: 80 }
+    ];
+    // fondo di sicurezza: nessuno sparisce nel vuoto
+    this.ground.push({ x: -400, y: 820, w: MAP_END + 1200, h: 60 });
+
+    // --- marciapiedi / muretti solidi con margini generosi
+    // Nessun muro solido sul percorso: la scenografia urbana è decorativa.
+    // Restano solo due barriere sceniche FUORI dalla fascia di gioco, sopra l'area calpestabile.
+    this.muri.push({ x: 4400, y: 250, w: 90, h: 40 });
+    this.muri.push({ x: 9700, y: 250, w: 90, h: 40 });
+
+    // --- piattaforme galleggianti
+    // piattaforme: salgono verso l'alto con margini generosi (una ogni ~90 px)
+    const platDef = [
+      [520, 420, 140, 18], [760, 360, 130, 18], [1200, 400, 150, 18],
+      [1750, 380, 140, 18], [2050, 320, 130, 18], [2450, 390, 160, 18],
+      [2900, 370, 140, 18], [3200, 300, 150, 18], [3700, 390, 130, 18],
+      [4050, 310, 140, 18], [4600, 400, 150, 18], [4900, 330, 130, 18],
+      [5450, 380, 160, 18], [5800, 310, 140, 18], [6350, 400, 130, 18],
+      [6850, 370, 150, 18], [7150, 290, 140, 18], [7650, 390, 150, 18],
+      [8100, 320, 140, 18], [8800, 400, 150, 18], [9150, 310, 140, 18],
+      [9650, 380, 150, 18], [10150, 300, 140, 18], [10650, 400, 150, 18],
+      [11150, 330, 140, 18], [11700, 390, 150, 18], [12200, 310, 140, 18],
+      [12650, 400, 150, 18], [13150, 320, 140, 18], [13650, 390, 150, 18]
+    ];
+    platDef.forEach(p => this.platform.push({ x: p[0], y: p[1], w: p[2], h: p[3] }));
+
+    // --- scalette: sostegni solidi sotto ogni piattaforma raggiungibile
+    // Nessun pilastro: le piattaforme restano sospese e si prendono al volo.
+
+    // --- impalcatura verticale per le 2 monete in quota (zona iniziale)
+    this.muri.push({ x: 1330, y: 60, w: 70, h: 300 });
+    this.platform.push({ x: 1150, y: 120, w: 120, h: 18 });
+
+    // --- pericoli: automobili e pedoni col nasone
+    this.traps = [
+      // auto: corrono sulla carreggiata, sotto il marciapiede
+      { x: 1750, y: 510, ty: 'auto', range: 380, speed: 2.2 },
+      { x: 3550, y: 510, ty: 'auto', range: 420, speed: 2.6 },
+      { x: 5000, y: 510, ty: 'auto', range: 400, speed: 2.9 },
+      { x: 6750, y: 510, ty: 'auto', range: 450, speed: 3.1 },
+      { x: 8100, y: 510, ty: 'auto', range: 420, speed: 3.3 },
+      { x: 9600, y: 510, ty: 'auto', range: 400, speed: 3.4 },
+      { x: 11000, y: 510, ty: 'auto', range: 430, speed: 3.6 },
+      { x: 12400, y: 510, ty: 'auto', range: 400, speed: 3.7 },
+      { x: 13300, y: 510, ty: 'auto', range: 380, speed: 3.8 },
+      // pedoni col nasone: passano sui lati, mai sulla traiettoria diretta
+      { x: 1400, y: 465, ty: 'naso' }, { x: 2200, y: 465, ty: 'naso' },
+      { x: 3100, y: 465, ty: 'naso' }, { x: 4300, y: 465, ty: 'naso' },
+      { x: 6100, y: 465, ty: 'naso' }, { x: 7500, y: 465, ty: 'naso' },
+      { x: 8700, y: 465, ty: 'naso' }, { x: 10300, y: 465, ty: 'naso' },
+      { x: 11800, y: 465, ty: 'naso' }, { x: 12800, y: 465, ty: 'naso' }
+    ];
+
+    // --- zone narrative (per la progressione temporale)
+    this.zone = [
+      { x: 0, nome: 'tramonto', luce: 0 },
+      { x: 1700, nome: 'quartiere', luce: .12 },
+      { x: 3000, nome: 'aladino', luce: .28 },
+      { x: 5400, nome: 'gaming', luce: .62 },
+      { x: 8300, nome: 'salotto', luce: .9 },
+      { x: 10300, nome: 'notte', luce: 1 }
+    ];
+
+    // --- decorazioni procedurali (palazzi, insegne, lampioni)
+    for (let dx = -200; dx < MAP_END; dx += 260) {
+      this.decor.push({ t: 'palazzo', x: dx, h: 120 + ((dx * 37) % 160), c: (dx / 260) % 3 });
+    }
+    for (let dx = 200; dx < MAP_END; dx += 620) this.decor.push({ t: 'lampione', x: dx });
+    for (let dx = 400; dx < MAP_END; dx += 900) this.decor.push({ t: 'insegna', x: dx, txt: ['BAR', 'PIZZA', 'SCOMMESSE', 'MOTO', 'KEBAB'][((dx / 900) | 0) % 5] });
+  }
+};
+
+/* ========================================================================
+   6. MONETE — 110 esatte, 108 accessibili + 2 in quota
+   ======================================================================== */
+const Monete = {
+  lista: [],
+  build() {
+    this.lista = [];
+    let id = 0;
+    const add = (x, y, alta) => this.lista.push({ id: id++, x, y, alta: !!alta, presa: false, t: Math.random() * 6.28, anim: 0 });
+
+    // Le 2 monete elevate, ben visibili ma fuori portata senza jetpack
+    add(1180, 70, true);
+    add(1265, 20, true);
+
+    // 108 monete accessibili: tracciate a mano lungo le piattaforme
+    const punti = [
+      [1170, 88],
+      [1250, 88],
+      [540, 318],
+      [620, 318],
+      [780, 248],
+      [860, 248],
+      [1220, 288],
+      [1300, 288],
+      [1770, 268],
+      [1850, 268],
+      [2070, 198],
+      [2150, 198],
+      [2470, 258],
+      [2550, 258],
+      [2920, 238],
+      [3000, 238],
+      [3220, 168],
+      [3300, 168],
+      [3720, 248],
+      [3800, 248],
+      [4070, 178],
+      [4150, 178],
+      [4620, 268],
+      [4700, 268],
+      [4920, 198],
+      [5000, 198],
+      [5470, 248],
+      [5550, 248],
+      [5820, 178],
+      [5900, 178],
+      [6370, 268],
+      [6450, 268],
+      [6870, 228],
+      [6950, 228],
+      [7170, 158],
+      [7250, 158],
+      [7670, 248],
+      [7750, 248],
+      [8120, 188],
+      [8200, 188],
+      [8820, 258],
+      [8900, 258],
+      [9170, 178],
+      [9250, 178],
+      [9670, 238],
+      [9750, 238],
+      [10170, 168],
+      [10250, 168],
+      [10670, 258],
+      [10750, 258],
+      [11170, 198],
+      [11250, 198],
+      [11720, 248],
+      [11800, 248],
+      [12220, 178],
+      [12300, 178],
+      [12670, 258],
+      [12750, 258],
+      [13170, 188],
+      [13250, 188],
+      [13670, 248],
+      [13750, 248],
+      [300, 390],
+      [560, 390],
+      [820, 390],
+      [1080, 390],
+      [1340, 390],
+      [1600, 390],
+      [1860, 390],
+      [2120, 390],
+      [2380, 390],
+      [2640, 390],
+      [2900, 390],
+      [3160, 390],
+      [3420, 390],
+      [3680, 390],
+      [3940, 390],
+      [4200, 390],
+      [4460, 390],
+      [4720, 390],
+      [4980, 390],
+      [5240, 390],
+      [5500, 390],
+      [5760, 390],
+      [6020, 390],
+      [6280, 390],
+      [6540, 390],
+      [6800, 390],
+      [7060, 390],
+      [7320, 390],
+      [7580, 390],
+      [7840, 390],
+      [8100, 390],
+      [8360, 390],
+      [8620, 390],
+      [8880, 390],
+      [9140, 390],
+      [9400, 390],
+      [9660, 390],
+      [9920, 390],
+      [10180, 390],
+      [10440, 390],
+      [10700, 390],
+      [10960, 390],
+      [11220, 390],
+      [11480, 390],
+      [11740, 390],
+      [12000, 390]
+    ];
+    punti.forEach(p => add(p[0], p[1], false));
+  }
+};
+
+/* ========================================================================
+   7. PLAYER
+   ======================================================================== */
+class Player {
+  constructor(x, y, stato) {
+    this.x = x; this.y = y; this.w = 30; this.h = 46;
+    this.vx = 0; this.vy = 0;
+    this.onGround = false; this.coyote = 0; this.buffer = 0;
+    this.holdingJump = false; this.jumpRelease = false;
+    this.hp = stato.hp; 
+    this.inv = 0; this.knock = 0;
+    this.facing = 1; this.anim = 0; this.animType = 'idle';
+    this.arrabbiato = 0; this.jet = 0; this.jetOn = false;
+    this.morto = false; this.morteT = 0;
+    this.h = 46;
+  }
+  get cx() { return this.x + this.w / 2; }
+  get cy() { return this.y + this.h / 2; }
+
+  update(g) {
+    const st = g.stato;
+    if (this.morto) {
+      this.morteT++;
+      this.vy += GRAV; this.y += this.vy;
+      if (this.morteT > 70) g.respawn();
+      return;
+    }
+    if (this.arrabbiato > 0) this.arrabbiato--;
+    if (this.inv > 0) this.inv--;
+
+    if (this.knock > 0) { this.knock--; }
+    else {
+      const acc = this.onGround ? RUN_ACC : AIR_ACC;
+      if (Input.sinistra) { this.vx -= acc; this.facing = -1; }
+      else if (Input.destra) { this.vx += acc; this.facing = 1; }
+      else if (this.onGround) this.vx *= FRICTION;
+      const maxV = st.jetpack ? RUN_MAX * 1.25 : RUN_MAX;
+      this.vx = clamp(this.vx, -maxV, maxV);
+      if (Math.abs(this.vx) < .05) this.vx = 0;
+    }
+
+    // salto con jump buffer + coyote time + altezza variabile
+    if (this.onGround) this.coyote = COYOTE; else if (this.coyote > 0) this.coyote--;
+    if (Input.salto) { if (!this.holdingJump) this.buffer = JUMP_BUFFER; this.holdingJump = true; }
+    else { this.holdingJump = false; if (this.vy < -3 && !this.jetOn) this.vy *= .55; }
+
+    if (this.buffer > 0 && this.coyote > 0) {
+      this.vy = JUMP_V; this.buffer = 0; this.coyote = 0;
+      this.onGround = false; this.animType = 'jump';
+      Audio2.salto();
+    }
+    if (this.buffer > 0) this.buffer--;
+
+    // jetpack
+    if (st.jetpack && !this.onGround && Input.salto && this.vy > -6) {
+      this.vy -= .55; this.jetOn = true; this.jet = 1;
+      if (Math.random() < .3) g.particelle.push({ x: this.cx + rnd(-6, 6), y: this.y + this.h, vx: rnd(-.4, .4), vy: rnd(.5, 1.6), l: 18, c: Math.random() < .5 ? '#ffdd55' : '#ff7722' });
+      if (g.frame % 12 === 0) Audio2.jetpack();
+    } else this.jetOn = false;
+
+    this.vy = Math.min(this.vy + GRAV, MAX_FALL);
+    this.x += this.vx;
+    Collisioni.muoviX(this, g);
+    this.y += this.vy;
+    const era = this.onGround;
+    this.onGround = false;
+    Collisioni.muoviY(this, g);
+    if (this.onGround && !era && this.vy >= 0) this.animType = 'idle';
+
+    this.x = clamp(this.x, 0, MAP_END - this.w);
+    if (this.y > 760) g.cadiNelVuoto();
+
+    // animazione
+    if (this.onGround) {
+      if (Math.abs(this.vx) > .6) { this.animType = 'run'; this.anim += Math.abs(this.vx) * .06; }
+      else { this.animType = 'idle'; this.anim += .06; }
+    } else if (this.jetOn) { this.animType = 'jet'; this.anim += .25; }
+    else if (this.animType !== 'jump') this.animType = 'jump';
+  }
+
+  danno(n, g, dirX) {
+    if (this.inv > 0 || this.morto) return;
+    this.hp -= n;
+    this.inv = 45;                 // ~0,75 s: danno ripetuto impossibile, ma non eterno
+    this.knock = 8;
+    this.vx = dirX * 2.4; this.vy = -3;
+    g.stato.danni += n;
+    Audio2.danno();
+    g.shake = 10;
+    for (let i = 0; i < 12; i++) g.particelle.push({ x: this.cx, y: this.cy, vx: rnd(-3, 3), vy: rnd(-3, 2), l: 20, c: '#ff4466' });
+    if (this.hp <= 0) { this.hp = 0; this.morto = true; this.morteT = 0; g.stato.morti++; this.vy = -9; }
+  }
+  cura(n, g) {
+    const prima = this.hp;
+    this.hp = Math.min(MAX_HP, this.hp + n);
+    if (this.hp > prima) {
+      Audio2.cura();
+      for (let i = 0; i < 20; i++) g.particelle.push({ x: this.cx + rnd(-16, 16), y: this.cy + rnd(-20, 20), vx: rnd(-.6, .6), vy: rnd(-1.6, -.3), l: 34, c: '#7dffa0' });
+    }
+    return this.hp > prima;
+  }
+}
+
+/* ========================================================================
+   8. COLLISIONI
+   ======================================================================== */
+const Collisioni = {
+  solidi(g) { return Level.ground.concat(Level.muri); },
+  muoviX(e, g) {
+    const s = this.solidi(g);
+    for (const b of s) {
+      if (e.x < b.x + b.w && e.x + e.w > b.x && e.y < b.y + b.h && e.y + e.h > b.y) {
+        if (e.vx > 0) e.x = b.x - e.w; else if (e.vx < 0) e.x = b.x + b.w;
+        e.vx = 0;
+      }
+    }
+  },
+  muoviY(e, g) {
+    const s = this.solidi(g);
+    for (const b of s) {
+      if (e.x < b.x + b.w && e.x + e.w > b.x && e.y < b.y + b.h && e.y + e.h > b.y) {
+        if (e.vy >= 0) { e.y = b.y - e.h; e.vy = 0; e.onGround = true; }
+        else { e.y = b.y + b.h; e.vy = 0; }
+      }
+    }
+    // piattaforme: solide solo da sopra
+    for (const p of Level.platform) {
+      if (e.x < p.x + p.w && e.x + e.w > p.x) {
+        const prev = e.y + e.h - e.vy;
+        if (e.vy >= 0 && prev <= p.y + 4 && e.y + e.h >= p.y && e.y + e.h <= p.y + p.h + 8) {
+          e.y = p.y - e.h; e.vy = 0; e.onGround = true;
+        }
+      }
+    }
+  }
+};
+
+/* ========================================================================
+   9. DIALOGHI
+   ======================================================================== */
+class Dialogo {
+  constructor(scelte) { this.scelte = scelte || null; }
+}
+
+const Dialoghi = {
+  attivo: null,   // {nome, ritratto, righe:[{t,urlo}], i, testoVisibile, vel, blocca, scelte, onFine, id}
+  coda: [],       // aperture richieste dall'interno di update(): eseguite dopo
+  tipo: 0,        // 0 = solo righe, 1 = con scelte ai punti indicati
+  shakeT: 0,
+
+  apri(id, config, onFine) {
+    if (this.inUpdate) { this.coda.push({ tipo: 'apri', id, config, onFine }); return; }
+    this.attivo = null;                     // nessun dialogo sovrapposto
+    const righe = config.righe.map(r => (typeof r === 'string' ? { t: r } : r));
+    this.attivo = {
+      id, nome: config.nome, ritratto: config.ritratto, righe,
+      i: 0, testoVisibile: 0, vel: 1.6, blocca: config.blocca !== false,
+      scelte: null, selezionata: 0, onFine, chiuso: false
+    };
+    Audio2.dialogo();
+  },
+  apriMonologo(id, config, onFine) {
+    if (this.inUpdate) { this.coda.push({ tipo: 'monologo', id, config, onFine }); return; }
+    this.attivo = null;                     // nessun dialogo sovrapposto
+    const righe = config.monologo.map(r => ({ t: r.t, urlo: !!r.urlo, titolo: !!r.titolo }));
+    this.attivo = {
+      id, nome: config.nome, ritratto: config.ritratto, righe,
+      i: 0, testoVisibile: 0, vel: 1.9, blocca: true,
+      scelte: null, selezionata: 0, onFine, chiuso: false,
+      scelteFasulle: config.scelteFasulle, testoScelta: config.testoScelta,
+      opzioni: config.opzioni, repliche: config.repliche, replicheUsate: 0,
+      inScelta: false, sceltaDopo: null, shake: 0
+    };
+    Audio2.dialogo();
+  },
+  attivoOra() { return this.attivo && !this.attivo.chiuso; },
+
+  svuotaCoda() {
+    if (!this.coda.length) return;
+    const c = this.coda.shift();            // UNA per fotogramma: niente ricorsione
+    this.inUpdate = false;
+    if (c.tipo === 'monologo') this.apriMonologo(c.id, c.config, c.onFine);
+    else this.apri(c.id, c.config, c.onFine);
+  },
+
+  update() {
+    const d = this.attivo;
+    if (!d || d.chiuso) { this.svuotaCoda(); return; }
+    this.inUpdate = true;
+    if (d.shake > 0) d.shake--;
+
+    const riga = d.righe[d.i];
+    if (!riga) { this.chiudi(); return; }
+
+    // ---------- 1. RIGA DI SCELTA ----------
+    if (riga.scelta) {
+      if (!d.inScelta) {
+        d.inScelta = true;
+        d.scelte = riga.testo || 'Scegli';
+        d.opzioniVere = riga.opzioni || ['Si', 'No'];
+        d.selezionata = 0;
+      }
+      if (Input.premiuto('ArrowUp')) { d.selezionata = 0; Audio2.dialogo(); }
+      if (Input.premiuto('ArrowDown')) { d.selezionata = Math.min(1, (d.opzioniVere || []).length - 1); Audio2.dialogo(); }
+      if (Input.premiuto('Digit1')) d.selezionata = 0;
+      if (Input.premiuto('Digit2')) d.selezionata = 1;
+      const conferma = Input.premiuto('Enter') || Input.premiuto('Space') || Input.premiuto('KeyE')
+        || Input.qualsiasi || Input.clickOra;
+      if (conferma) {
+        Audio2.dialogo();
+        d.inScelta = false; d.scelte = null; d.opzioniVere = null;
+        if (riga.repliche && riga.repliche.length) {
+          const rep = riga.repliche[Math.min(d.replicheUsate++, riga.repliche.length - 1)];
+          d.righe.splice(d.i + 1, 0, { t: rep });
+        }
+        d.i++;                       // la scelta si supera SEMPRE
+        d.testoVisibile = 0;
+      }
+      return;
+    }
+
+    // ---------- 2. SCELTA FINTA di Aladino (dentro un dialogo normale) ----------
+    if (d.inScelta) {
+      if (Input.premiuto('ArrowUp')) { d.selezionata = 0; Audio2.dialogo(); }
+      if (Input.premiuto('ArrowDown')) { d.selezionata = 1; Audio2.dialogo(); }
+      if (Input.premiuto('Digit1')) d.selezionata = 0;
+      if (Input.premiuto('Digit2')) d.selezionata = 1;
+      const conferma = Input.premiuto('Enter') || Input.premiuto('Space') || Input.premiuto('KeyE')
+        || Input.qualsiasi || Input.clickOra;
+      if (conferma) {
+        Audio2.dialogo();
+        d.scelte = null; d.inScelta = false;
+        const lista = d.repliche || [];
+        if (lista.length) {
+          const rep = lista[Math.min(d.replicheUsate++, lista.length - 1)];
+          d.righe.splice(d.i + 1, 0, { t: rep });
+        }
+        d.i++;                       // comunque si va avanti: mai bloccarsi
+        d.testoVisibile = 0;
+      }
+      return;
+    }
+
+    // ---------- 3. RIGA NORMALE ----------
+    if (riga.t === undefined) { this.avanza(); return; }
+    if (d.testoVisibile < riga.t.length) {
+      d.testoVisibile += d.vel;
+      if (Math.floor(d.testoVisibile) % 3 === 0 && Math.random() < .3) Audio2.dialogo();
+    }
+    if (riga.urlo) this.shakeT = 4;
+
+    const avanti = Input.premiuto('Enter') || Input.premiuto('Space') || Input.premiuto('KeyE')
+      || Input.qualsiasi || Input.clickOra;
+    if (avanti) {
+      if (d.testoVisibile < riga.t.length) { d.testoVisibile = riga.t.length; return; }
+      this.avanza();
+    }
+  },
+
+  avanza() {
+    const d = this.attivo;
+    d.i++;
+    d.testoVisibile = 0;
+    if (d.i >= d.righe.length) { this.chiudi(); return; }
+    // scelte finte di Aladino
+    if (d.scelteFasulle && d.scelteFasulle.includes(d.i - 1) && !d.inScelta) {
+      d.testoVisibile = d.righe[d.i].t.length;
+      d.inScelta = true;
+      d.scelte = d.testoScelta;
+    }
+  },
+  apriSceltaVera(opzioni, testo, cb) {
+    const d = this.attivo;
+    d.inScelta = true; d.scelte = testo; d.opzioniVere = opzioni;
+    d.selezionata = 0; d.sceltaVerace = i => { d.inScelta = false; d.scelte = null; d.sceltaVerace = null; cb(i); };
+  },
+  chiudi() {
+    const d = this.attivo;
+    if (!d) return;
+    d.chiuso = true;
+    const cb = d.onFine;
+    this.attivo = null;
+    this.inUpdate = false;                  // da qui in poi si può aprire subito
+    if (cb) cb();
+  }
+};
+
+/* ========================================================================
+   10. NPC
+   ======================================================================== */
+class NPC {
+  constructor(cfg) {
+    Object.assign(this, cfg);
+    this.t = Math.random() * 10;
+    this.fantasma = 0;
+    this.vivo = true;
+  }
+  get box() { return { x: this.x - 18, y: this.y - 56, w: 44, h: 60 }; }
+  update(g, dt) { this.t += dt; }
+}
+
+/* ========================================================================
+   11. GAME
+   ======================================================================== */
+const Game = {
+  canvas: null, ctx: null,
+  stato: null, player: null, npcs: [], auto: [],
+  camera: { x: 0, y: 0 }, camTargetY: 0,
+  particelle: [], frame: 0, shake: 0,
+  pausa: false, inMenu: true, inDialogoBloccato: false,
+  spritz: 0, tempoLuce: 0,
+  obiettivo: '', hint: null, hintT: 0,
+  tInizio: 0, certificatoMostrato: false,
+  flashSchermo: 0,
+  moneteVolanti: [],
+
+  init() {
+    this.canvas = document.getElementById('game');
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.imageSmoothingEnabled = false;
+    Level.build();
+    Monete.build();
+    Input.init();
+    this.setupMenu();
+    this.setupNPCs();
+    this.stato = Save.carica() || Save.vuoto();
+    Audio2.on = this.stato.audio !== false;
+    document.getElementById('btnAudio').textContent = Audio2.on ? '🔊' : '🔇';
+    this.tInizio = Date.now();
+    this.inMenu = true;
+    // giocatore segnaposto: draw() non trova mai this.player a null
+    this.stato = this.stato || Save.vuoto();
+    this.player = new Player(this.stato.cpX, this.trovaY(this.stato.cpX), this.stato);
+    this.updateObiettivo();
+    requestAnimationFrame(() => this.loop());
+  },
+
+  /* ------------------------------------------------------------- menu */
+  setupMenu() {
+    const menu = document.getElementById('menu');
+    const cont = document.getElementById('mCont');
+    cont.disabled = !Save.esiste();
+    const mostra = () => {
+      menu.classList.remove('hidden');
+      document.getElementById('controls').classList.add('hidden');
+      document.getElementById('pause').classList.add('hidden');
+      document.getElementById('cert').classList.add('hidden');
+      this.inMenu = true;
+    };
+    document.getElementById('mNew').onclick = () => { Audio2.init(); Save.cancella(); this.nuovaPartita(); menu.classList.add('hidden'); };
+    cont.onclick = () => { Audio2.init(); this.caricaPartita(); menu.classList.add('hidden'); };
+    document.getElementById('mCtrl').onclick = () => document.getElementById('controls').classList.remove('hidden');
+    document.getElementById('cBack').onclick = () => document.getElementById('controls').classList.add('hidden');
+    document.getElementById('mDel').onclick = () => { Save.cancella(); cont.disabled = true; };
+    document.getElementById('pResume').onclick = () => this.setPausa(false);
+    document.getElementById('pMenu').onclick = () => { this.setPausa(false); Save.salva(this.stato); this.setupMenu(); mostra(); };
+    document.getElementById('btnPause').onclick = () => this.setPausa(!this.pausa);
+    document.getElementById('btnAudio').onclick = () => {
+      Audio2.on = !Audio2.on; this.stato.audio = Audio2.on;
+      document.getElementById('btnAudio').textContent = Audio2.on ? '🔊' : '🔇';
+      Save.salva(this.stato);
+    };
+    document.getElementById('certCont').onclick = () => {
+      document.getElementById('cert').classList.add('hidden');
+      this.pausa = false; this.certificatoMostrato = true;
+    };
+    document.getElementById('certRestart').onclick = () => {
+      document.getElementById('cert').classList.add('hidden');
+      Save.cancella(); this.nuovaPartita(); this.setupMenu2();
+    };
+    this.mostraMenu = mostra;
+  },
+  setupMenu2() { document.getElementById('mCont').disabled = !Save.esiste(); this.mostraMenu(); },
+
+  nuovaPartita() {
+    this.stato = Save.vuoto();
+    Audio2.on = true;
+    this.avviaLivello(true);
+  },
+  caricaPartita() {
+    const s = Save.carica();
+    if (!s) { this.nuovaPartita(); return; }
+    this.stato = s;
+    Audio2.on = s.audio !== false;
+    document.getElementById('btnAudio').textContent = Audio2.on ? '🔊' : '🔇';
+    this.avviaLivello(false);
+  },
+  avviaLivello(nuova) {
+    this.inMenu = false; this.pausa = false; this.certificatoMostrato = false;
+    Monete.build();
+    if (nuova) { this.stato = Save.vuoto(); }
+    Monete.lista.forEach(m => { if (this.stato.raccolte[m.id]) m.presa = true; });
+    this.player = new Player(this.stato.cpX, this.trovaY(this.stato.cpX), this.stato);
+    this.player.hp = this.stato.hp > 0 ? this.stato.hp : MAX_HP;
+    this.setupNPCs();
+    this.camera.x = clamp(this.player.x - VIEW_W / 2, 0, MAP_END - VIEW_W);
+    this.camera.y = clamp(this.player.y - VIEW_H * .5, -120, 320);
+    this.centraPlayer = 90;   // per 1 secondo la telecamera resta incollata al giocatore
+    this.spritz = this.stato.spritz || 0;
+    if (this.stato.jetpack) this.mostraHint('Jetpack attivo: tieni SALTO in aria. Puoi tornare indietro su tutta la mappa.', 260);
+    this.particelle = []; this.moneteVolanti = [];
+    this.updateObiettivo();
+    this.tInizio = Date.now();
+    this.mostraHint('Zona 1 — Quartiere al tramonto. Cerca Faz e raccogli monete.', 220);
+  },
+  trovaY(x) {
+    // sceglie il blocco di terreno PIÙ ALTO sotto la x: quello di sicurezza
+    // a y=700 non deve mai vincere sul marciapiede vero a y=430
+    let migliore = null;
+    for (const b of Level.ground) {
+      if (b.y > 700) continue;                    // fondo di sicurezza: non conta
+      if (x > b.x && x < b.x + b.w) {
+        if (migliore === null || b.y < migliore) migliore = b.y;
+      }
+    }
+    return (migliore === null ? 380 : migliore - 50);
+  },
+
+  // posizione sicura: se il personaggio finisce fuori dallo schermo, lo riporta sul terreno
+  sicurezzaGiocatore() {
+    const p = this.player;
+    if (p.y > 560 || p.y < -200 || !isFinite(p.y)) {
+      p.x = clamp(p.x || 0, 40, MAP_END - 40);
+      p.y = this.trovaY(p.x);
+      p.vy = 0; p.vx = 0;
+      this.camera.y = clamp(p.y - VIEW_H * .5, -120, 320);
+      this.camera.x = clamp(p.x - VIEW_W / 2, 0, MAP_END - VIEW_W);
+    }
+  },
+
+  /* -------------------------------------------------------------- NPC */
+  setupNPCs() {
+    const D = DIALOGHI;
+    const Y = 470;                          // gli NPC poggiano sul marciapiede
+    this.npcs = [
+      new NPC({ id: 'faz', x: 800, y: 470, tipo: 'faz', nome: 'FAZ', dialogo: 'faz', range: 70, zona: 1 }),
+      new NPC({ id: 'aladino', x: 3300, y: 470, tipo: 'aladino', nome: 'ALADINO', range: 90, zona: 3 }),
+      new NPC({ id: 'tony', x: 5500, y: 470, tipo: 'tony', nome: 'TONY', range: 90, zona: 4 }),
+      new NPC({ id: 'consy', x: 5620, y: 470, tipo: 'consy', nome: 'CONSY', range: 70, zona: 4, decorativo: true }),
+      new NPC({ id: 'kesor', x: 8400, y: 470, tipo: 'kesor', nome: 'KESOR', range: 60, zona: 5 }),
+      new NPC({ id: 'q71', x: 8480, y: 470, tipo: 'q71', nome: '71', range: 60, zona: 5 }),
+      new NPC({ id: 'pollo', x: 8560, y: 470, tipo: 'pollo', nome: 'POLLO', range: 60, zona: 5 }),
+      new NPC({ id: 'justsciv', x: 8640, y: 470, tipo: 'justsciv', nome: 'JUSTSCIV', range: 60, zona: 5 }),
+      new NPC({ id: 'tv', x: 8520, y: 440, tipo: 'tv', nome: 'TV', range: 0, decorativo: true }),
+      new NPC({ id: 'trombizio', x: 10500, y: 470, tipo: 'trombizio', nome: 'TROMBIZIO', range: 80, zona: 6 }),
+      new NPC({ id: 'bbq', x: 11500, y: 470, tipo: 'bbq', nome: 'UOMO DEL BBQ', range: 80, zona: 7 }),
+      new NPC({ id: 'sfondo', x: 12300, y: 300, tipo: 'sfondo', nome: '???', range: 0, decorativo: true, zona: 8 }),
+      new NPC({ id: 'paddone', x: 12900, y: 470, tipo: 'paddone', nome: 'PADDONE', range: 80, zona: 9 }),
+      new NPC({ id: 'spaccino', x: 13500, y: 470, tipo: 'spaccino', nome: 'SPACCINO', range: 90, zona: 10 }),
+      new NPC({ id: 'eddie', x: 13600, y: 470, tipo: 'eddie', nome: 'EDDIE', range: 70, zona: 10 }),
+      new NPC({ id: 'silenzioso', x: 13680, y: 470, tipo: 'silenzioso', nome: '', range: 0, decorativo: true, zona: 10 }),
+      new NPC({ id: 'shyde', x: 13900, y: 470, tipo: 'shyde', nome: 'SHYDE', range: 80, zona: 11 }),
+      new NPC({ id: 'marcolino', x: 14100, y: 470, tipo: 'marcolino', nome: 'MARCOLINO', range: 90, zona: 12 }),
+    ];
+  },
+
+  /* --------------------------------------------------------- obiettivo */
+  updateObiettivo() {
+    const st = this.stato;
+    const mancano = 110 - st.moneteWorld;
+    if (st.certificato) this.obiettivo = 'Certificato ottenuto — sei un Ballèr';
+    else if (st.jetpack) this.obiettivo = 'Jetpack attivo: raccogli le monete in quota (' + st.moneteWorld + '/110)';
+    else this.obiettivo = 'Raccogli monete e incontra gli NPC (' + st.moneteWorld + '/110)';
+    if (st.jetpack && !st.certificato && st.moneteWorld >= 110) this.obiettivo = 'Torna da Marcolino per il certificato!';
+    if (st.jetpack && !st.certificato && mancano > 0 && st.moneteWorld >= 100)
+      this.obiettivo = 'Torna da Marcolino quando vuoi: mancano ' + mancano + ' monete';
+  },
+
+  mostraHint(t, fr) { this.hint = t; this.hintT = fr || 180; },
+
+  /* ------------------------------------------------------------- loop */
+  loop() {
+    this.frame++;
+    if (!this.inMenu && !this.pausa && this.player) this.update();
+    this.draw();
+    Input.azzeraFrame();
+    requestAnimationFrame(() => this.loop());
+  },
+
+  update() {
+    const dt = 1;
+    // Esc: se c'è un dialogo aperto lo chiude, altrimenti mette in pausa
+    if (Input.premiuto('Escape')) {
+      if (Dialoghi.attivoOra() && Dialoghi.attivo.id !== 'aladino') {
+        Dialoghi.chiudi();
+        this.mostraHint('Dialogo saltato. Puoi parlare di nuovo con chi vuoi.', 140);
+      } else {
+        this.setPausa(true);
+      }
+    }
+
+    const bloccato = this.inDialogoBloccato;
+    if (!bloccato) {
+      this.player.update(this);
+      this.sicurezzaGiocatore();
+      this.sincronizzaMonete();
+      // trappole mobili
+      Level.traps.forEach(t => {
+        if (t.ty === 'auto') {
+          if (t.dir === undefined) { t.dir = 1; t.start = t.x; }
+          t.x += t.speed * t.dir;
+          if (t.x > t.start + t.range || t.x < t.start) t.dir *= -1;
+        }
+      });
+    } else {
+      this.player.vx *= .8;
+      this.player.vy = Math.min(this.player.vy + GRAV, MAX_FALL);
+      this.player.y += this.player.vy;
+      Collisioni.muoviY(this.player, this);
+    }
+
+    // dialogo
+    Dialoghi.inUpdate = true;               // le aperture richieste ora vanno in coda
+    Dialoghi.update();
+    Dialoghi.inUpdate = false;
+    Dialoghi.svuotaCoda();
+    this.inDialogoBloccato = Dialoghi.attivoOra() && Dialoghi.attivo.blocca;
+
+    // monete
+    this.checkMonete();
+    // pericoli
+    if (!this.inDialogoBloccato) this.checkTrappole();
+    // interazione NPC
+    this.checkInterazione();
+    // zona / luce
+    this.aggiornaZona();
+    // NPC
+    this.npcs.forEach(n => n.update(this, dt));
+    // particelle
+    this.particelle.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .04; p.l--; });
+    this.particelle = this.particelle.filter(p => p.l > 0);
+    this.moneteVolanti.forEach(m => {
+      m.t += .06;
+      const k = Math.min(1, m.t);
+      m.x = lerp(m.x0, m.x1, k); m.y = lerp(m.y0, m.y1, k) - Math.sin(k * Math.PI) * 50;
+      m.l--;
+    });
+    this.moneteVolanti = this.moneteVolanti.filter(m => m.l > 0);
+
+    // sicurezza: se il giocatore finisce fuori inquadratura, riporta la telecamera su di lui
+    if (Math.abs(this.player.cx - (this.camera.x + VIEW_W / 2)) > VIEW_W * .9) {
+      this.camera.x = clamp(this.player.cx - VIEW_W / 2, 0, MAP_END - VIEW_W);
+      this.camera.y = clamp(this.player.cy - VIEW_H * .58, -120, 320);
+    }
+    if (this.shake > 0) this.shake--;
+    if (this.hintT > 0) this.hintT--;
+    if (this.flashSchermo > 0) this.flashSchermo--;
+
+    // camera
+    const tx = clamp(this.player.cx - VIEW_W / 2, 0, MAP_END - VIEW_W);
+    const ty = clamp(this.player.cy - VIEW_H * .58, -120, 320);
+    if (this.centraPlayer > 0) {
+      this.centraPlayer--;
+      this.camera.x = tx; this.camera.y = ty;
+    } else {
+      this.camera.x = lerp(this.camera.x, tx, .12);
+      this.camera.y = lerp(this.camera.y, ty, .08);
+    }
+
+    // spritz: dissolvenza dopo Shyde
+    if (this.spritz > 0 && this.stato.spritzFinito) this.spritz = Math.max(0, this.spritz - .01);
+    this.stato.spritz = this.spritz;
+    this.stato.tempo += 1 / 60;
+  },
+
+  setPausa(v) {
+    this.pausa = v;
+    document.getElementById('pause').classList.toggle('hidden', !v);
+    if (v) Save.salva(this.stato);
+  },
+
+  /* ---------------------------------------------------------- monete */
+  checkMonete() {
+    const p = this.player;
+    Monete.lista.forEach(m => {
+      if (m.presa) return;
+      m.t += .07;
+      if (Math.abs(m.x - p.cx) < 26 && Math.abs(m.y - p.cy) < 34) {
+        m.presa = true; m.anim = 1;
+        this.stato.raccolte[m.id] = 1;
+        if (!this.stato.trombizio) this.stato.mc = Math.max(this.stato.mc, Object.keys(this.stato.raccolte).length - (this.stato.trombizio ? 10 : 0));
+        this.sincronizzaMonete();
+        Audio2.moneta();
+        for (let i = 0; i < 8; i++) this.particelle.push({ x: m.x, y: m.y, vx: rnd(-1.6, 1.6), vy: rnd(-2.4, -.4), l: 22, c: '#ffd34d' });
+        this.updateObiettivo();
+      }
+    });
+  },
+
+  /* -------------------------------------------------------- trappole */
+  checkTrappole() {
+    const p = this.player;
+    if (p.inv > 0) return;        // durante l'invulnerabilità si passa, non si resta incastrati
+    Level.traps.forEach(t => {
+      if (t.ty === 'auto') {
+        // danno solo se il giocatore è davvero sulla carreggiata, non sul marciapiede
+        if (p.x + p.w > t.x - 8 && p.x < t.x + 78 && p.y + p.h > 470 && p.y + p.h < 540) {
+          p.danno(10, this, p.cx < t.x + 35 ? -1 : 1);
+        }
+      } else {
+        // pedone col nasone: colpisce solo se lo tocchi davvero
+        if (p.x + p.w > t.x - 12 && p.x < t.x + 28 && p.y + p.h > t.y - 34 && p.y < t.y + 8) {
+          p.danno(6, this, p.cx < t.x ? -1 : 1);
+        }
+      }
+    });
+  },
+  cadiNelVuoto() {
+    // nessuna morte istantanea: danno + respawn al checkpoint
+    const p = this.player;
+    p.hp -= 15; this.stato.danni += 15;
+    Audio2.danno(); this.shake = 14;
+    if (p.hp <= 0) { p.hp = 0; p.morto = true; p.morteT = 0; this.stato.morti++; }
+    else this.respawn();
+  },
+  respawn() {
+    const st = this.stato;
+    this.player.x = st.cpX;
+    this.player.y = this.trovaY(st.cpX);
+    this.player.vx = 0; this.player.vy = 0;
+    this.player.morto = false; this.player.morteT = 0;
+    this.player.hp = st.hp > 0 ? st.hp : MAX_HP;
+    this.player.inv = 100;
+    this.inDialogoBloccato = false;
+    Dialoghi.attivo = null;
+    this.camera.x = clamp(this.player.x - VIEW_W / 2, 0, MAP_END - VIEW_W);
+    this.mostraHint('Respawn al checkpoint. Monete e dialoghi sono al sicuro.', 150);
+  },
+  setCheckpoint(x) {
+    const st = this.stato;
+    if (Math.abs(x - st.cpX) < 200) return;
+    st.cpX = x; st.cpY = 0; st.hp = this.player.hp;
+    Save.salva(st);
+    this.mostraHint('Checkpoint.', 90);
+  },
+
+  /* --------------------------------------------------- interazione */
+  npcVicino() {
+    let best = null, bd = 1e9;
+    this.npcs.forEach(n => {
+      if (n.decorativo) return;
+      const d = Math.abs(n.x - this.player.cx);
+      if (d < n.range && d < bd) { bd = d; best = n; }
+    });
+    return best;
+  },
+  checkInterazione() {
+    const n = this.npcVicino();
+    if (!n) return;
+    if (Input.premiuto('KeyE')) this.interagisci(n);
+  },
+  interagisci(n) {
+    const st = this.stato, D = DIALOGHI;
+    if (!st.npc.includes(n.id)) { st.npc.push(n.id); }
+    switch (n.id) {
+      case 'faz':
+        if (this.gia('faz')) return this.ripeti('faz', D.faz);
+        Dialoghi.apri('faz', D.faz, () => this.completa('faz'));
+        break;
+
+      case 'aladino': {
+        if (this.gia('aladino')) {
+          Dialoghi.apri('aladino_rip', { nome: D.aladino.nome, ritratto: D.aladino.ritratto, blocca: true, righe: D.aladino.fine });
+          return;
+        }
+        // chiamata, scelta finta, monologo: tutto nella stessa apertura
+        this.apriMonologoAladino();
+        break;
+      }
+
+      case 'tony': {
+        if (this.gia('tony')) return this.ripeti('tony', { nome: D.tonyConsy.nome, ritratto: D.tonyConsy.ritratto, righe: [D.tonyConsy.tonyFine] });
+        // sequenza UNICA: chiamata, urlo, scelta, battute finali
+        const righeT = [{ t: D.tonyConsy.primaChiamata[0] }]
+          .concat(D.tonyConsy.righe.map(t => ({ t })))
+          .concat([{ scelta: true, testo: D.tonyConsy.testoScelta, opzioni: D.tonyConsy.opzioni }])
+          .concat(D.tonyConsy.dopoScelta.map(t => ({ t })))
+          .concat([
+            { t: D.tonyConsy.consy },
+            { t: D.tonyConsy.tonyFine },
+            { t: D.tonyConsy.consyFinale, minuscolo: true }
+          ]);
+        Dialoghi.apri('tony', { nome: D.tonyConsy.nome, ritratto: D.tonyConsy.ritratto, blocca: true, righe: righeT }, () => {
+          this.completa('tony');
+          this.stato.notte = true;
+          const c = this.npcs.find(x => x.id === 'consy');
+          if (c) c.fantasma = 1;
+        });
+        break;
+      }
+
+      case 'kesor': case 'pollo': case 'justsciv': case 'q71': {
+        const key = { kesor: 'kesor', pollo: 'pollo', justsciv: 'justsciv', q71: 'q71' }[n.id];
+        const cfg = D.salotto[key];
+        if (this.gia('salotto_' + n.id)) return;
+        Dialoghi.apri('salotto_' + n.id, cfg, () => this.completa('salotto_' + n.id));
+        break;
+      }
+
+      case 'trombizio': {
+        if (st.trombizio) {
+          return this.ripeti('trombizio_rip', { nome: D.trombizio.nome, ritratto: D.trombizio.ritratto, righe: D.trombizio.righeDopo });
+        }
+        this.furtoInCorso = true;
+        Dialoghi.apri('trombizio', D.trombizio, () => {
+          // furto: una sola volta, saldo mai negativo
+          const prestito = st.possesso;          // monete disponibili per il furto
+          const mcPrima = st.mc;                 // "most coins" possedute davvero
+          const ruba = Math.min(D.trombizio.moneteRuba, Math.max(0, prestito));
+          st.mc = Math.max(0, mcPrima - ruba);
+          if (prestito >= D.trombizio.moneteRuba) st.mc = mcPrima; // tutte le monete sono sue
+          st.possesso = Math.max(0, st.moneteWorld - st.mc);
+          st.trombizio = true;
+          this.furtoInCorso = false;
+          Audio2.furto();
+          this.shake = 18;
+          this.player.arrabbiato = 150;
+          // animazione: monete dal giocatore a Trombizio
+          const tb = this.npcs.find(x => x.id === 'trombizio');
+          for (let i = 0; i < ruba; i++) {
+            this.moneteVolanti.push({
+              x0: this.player.cx + rnd(-14, 14), y0: this.player.cy + rnd(-14, 14),
+              x1: tb.x + rnd(-16, 16), y1: tb.y - 30,
+              x: this.player.cx, y: this.player.cy, t: 0, l: 70 + i * 6
+            });
+          }
+          for (let i = 0; i < 24; i++) this.particelle.push({ x: tb.x, y: tb.y - 30, vx: rnd(-2, 2), vy: rnd(-2, 2), l: 26, c: '#ffd34d' });
+          Save.salva(st);
+          this.updateObiettivo();
+        });
+        break;
+      }
+
+      case 'bbq': {
+        const cfg = D.bbq;
+        if (st.bbqMangiato) return this.ripeti('bbq_rip', { nome: cfg.nome, ritratto: cfg.ritratto, righe: cfg.righeSfame });
+        // sequenza unica: invito, poi la cura, poi il ringraziamento
+        const righeB = cfg.righe.map(t => ({ t })).concat(cfg.dopoMangiato.map(t => ({ t })));
+        Dialoghi.apri('bbq', { nome: cfg.nome, ritratto: cfg.ritratto, blocca: true, righe: righeB }, () => {
+          this.player.cura(MAX_HP, this);
+          st.bbqMangiato = true; st.hp = this.player.hp;
+          this.completa('bbq');
+        });
+        break;
+      }
+
+      case 'paddone': {
+        const cfg = D.paddone;
+        const soldi = this.stato.possesso < cfg.prezzo ? cfg.nonTiBastano : 'nun bastano manco se vendi tutto. E nun te vendo niente comunque.';
+        const righeP = [{ t: cfg.chiamata }]
+          .concat(cfg.giacche.map(g => ({ t: '• ' + g + ' — ' + cfg.prezzo + ' Ballèr Coins' })))
+          .concat([{ scelta: true, testo: 'Che fai?', opzioni: ['Ti compro una giacca (' + cfg.prezzo + ')', 'No, grazie'] }])
+          .concat([{ t: soldi }, { t: cfg.rifiuto }]);
+        Dialoghi.apri('paddone', { nome: cfg.nome, ritratto: cfg.ritratto, blocca: true, righe: righeP }, () => this.completa('paddone'));
+        break;
+      }
+
+      case 'spaccino': {
+        const cfg = D.spritz;
+        if (this.gia('spritz')) return;
+        // sequenza unica: chiamata, i cinque spritz, l'urlo
+        const righeS = [{ t: cfg.chiamata }]
+          .concat(cfg.beve.map(t => ({ t })))
+          .concat([{ t: cfg.eddie }, { t: cfg.urlo[0], urlo: true }]);
+        Dialoghi.apri('spritz', { nome: cfg.nome, ritratto: cfg.ritratto, blocca: true, righe: righeS }, () => {
+          this.spritz = 1;
+          this.completa('spritz');
+          this.player.vx = 3;
+          this.mostraHint('Sei andato a cinque spritz. Vai da Shyde, che ti rimette a posto.', 200);
+        });
+        break;
+      }
+
+      case 'eddie': {
+        Dialoghi.apri('eddie', { nome: 'EDDIE', ritratto: 'eddie', righe: ['aò ma bevi pure te o fai solo il figurante?'] });
+        break;
+      }
+
+      case 'shyde': {
+        const cfg = D.shyde;
+        if (this.gia('shyde')) return;
+        const r = cfg.parolaRusso[(Math.random() * cfg.parolaRusso.length) | 0];
+        // sequenza unica: invito, cura, battuta, scelta finale
+        const righeY = [{ t: cfg.chiamata }, { t: r }, { t: cfg.dopoMangiato }]
+          .concat([{ scelta: true, testo: 'Vuoi chiudere il discorso?', opzioni: cfg.opzioneFinale, repliche: [] }]);
+        Dialoghi.apri('shyde', { nome: cfg.nome, ritratto: cfg.ritratto, blocca: true, righe: righeY }, () => {
+          this.player.cura(45, this);
+          this.stato.spritzFinito = true;
+          this.spritz = Math.min(this.spritz, .2);
+          this.completa('shyde');
+        });
+        break;
+      }
+
+      case 'marcolino': {
+        this.marcolino();
+        break;
+      }
+    }
+  },
+
+  /* ----------------------------------------------------- monologo Aladino */
+  apriMonologoAladino() {
+    const D = DIALOGHI.aladino;
+    const senzaMonologo = this.gia('aladino');
+    if (senzaMonologo) {
+      Dialoghi.apri('aladino_rip', { nome: D.nome, ritratto: D.ritratto, blocca: true, righe: D.fine });
+      return;
+    }
+    Dialoghi.apriMonologo('aladino', D, () => this.completa('aladino'));
+    // completa l'oggetto del monologo: la chiamata in testa e tutto il resto
+    const a = Dialoghi.attivo;
+    if (!a) return;
+    a.righe = D.primaChiamata.map(t => ({ t })).concat(a.righe);
+    a.righe = a.righe.concat(D.fine.map(t => ({ t })));
+    a.scelteFasulle = D.scelteFasulle;
+    a.testoScelta = D.testoScelta;
+    a.opzioni = D.opzioni;
+    a.repliche = D.repliche;
+  },
+
+  /* ------------------------------------------------------- marcolino */
+  marcolino() {
+    const st = this.stato, D = DIALOGHI.marcolino;
+    const cfg = { nome: D.nome, ritratto: D.ritratto, blocca: true };
+    st.moneteWorld = Object.keys(st.raccolte).length;
+    st.possesso = Math.max(0, st.moneteWorld - (st.trombizio ? 10 : 0));
+
+    // già certificato: battute di saluto
+    if (st.certificato) {
+      Dialoghi.apri('marco_post', Object.assign({}, cfg, { righe: D.casoCPost }));
+      return;
+    }
+
+    // PRIMO incontro: jetpack subito, senza soglie. Carburante infinito.
+    if (!st.jetpack) {
+      st.jetpack = true;
+      Save.salva(st);
+      this.updateObiettivo();
+      this.mostraHint('JETPACK SBLOCCATO — tieni premuto SALTO mentre sei in aria per volare.', 340);
+      Dialoghi.apri('marco_jet', Object.assign({}, cfg, {
+        righe: [
+          "BALLER BALLER! UN NUOVO BALLER!",
+          "Statte fermo che t'ho visto arrampicà su mezzo quartiere a piedi. Nun se po' vede'.",
+          "Tieni sto JETPACK. Carburante infinito, nun te preoccupà di niente.",
+          "Tieni premuto SALTO mentre sei in aria e voli. Puoi tornare indietro su tutta la mappa.",
+          "E mo va a pijà tutte le monete che t'eri perso, comprese quelle in quota. Quanno hai fatto, torni qua.",
+        ]
+      }));
+      return;
+    }
+
+    // SECONDO incontro: certificato, quante monete vuoi
+    st.certificato = true;
+    Save.salva(st);
+    const righeC = D.casoC.concat(D.casoCPost);
+    Dialoghi.apri('marco_c', Object.assign({}, cfg, { righe: righeC }), () => {
+      Audio2.certificato();
+      this.flashSchermo = 60;
+      this.mostraCertificato();
+    });
+  },
+
+  mostraCertificato() {
+    const st = this.stato;
+    const t = Math.floor(st.tempo);
+    const mm = String(Math.floor(t / 60)).padStart(2, '0');
+    const ss = String(t % 60).padStart(2, '0');
+    const rows = [
+      ['Ballèr Coins raccolte nel mondo', st.moneteWorld + ' / 110'],
+      ['Ballèr Coins rubate da Trombizio', st.trombizio ? '10' : '0'],
+      ['Saldo posseduto', st.possesso],
+      ['Tempo di gioco', mm + ':' + ss],
+      ['Danni subiti', st.danni],
+      ['NPC incontrati', st.npc.length],
+      ['Morti', st.morti],
+    ];
+    document.getElementById('certStats').innerHTML =
+      rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('');
+    document.getElementById('cert').classList.remove('hidden');
+    this.pausa = true;
+    Save.salva(st);
+  },
+
+  /* --------------------------------------------------------- helper */
+  gia(id) { return !!this.stato.dialoghiCompletati[id]; },
+  completa(id) {
+    this.stato.dialoghiCompletati[id] = 1;
+    if (!this.stato.npc.includes(id)) this.stato.npc.push(id);
+    Save.salva(this.stato);
+    this.updateObiettivo();
+  },
+  ripeti(id, cfg) {
+    Dialoghi.apri(id, { nome: cfg.nome, ritratto: cfg.ritratto, blocca: true, righe: ['già parlato, regà. vai avanti.'] });
+  },
+
+  /* ------------------------------------------------ sincronizza monete */
+  sincronizzaMonete() {
+    const st = this.stato;
+    st.moneteWorld = Object.keys(st.raccolte).length;
+    const perse = st.trombizio ? Math.min(DIALOGHI.trombizio.moneteRuba, Math.max(0, st.mc)) : 0;
+    st.possesso = Math.max(0, st.moneteWorld - perse);
+    return st.possesso;
+  },
+
+  /* ------------------------------------------------------------ zona */
+  aggiornaZona() {
+    const x = this.player.x;
+    let luce = 0;
+    for (const z of Level.zone) if (x >= z.x) luce = z.luce;
+    if (this.stato.notte) luce = Math.max(luce, .95);
+    this.tempoLuce = luce;
+
+    // checkpoint dopo i gruppi di NPC
+    [800, 3300, 5620, 8640, 10500, 11500, 12900, 13500, 14100].forEach(cx => {
+      if (Math.abs(x - cx) < 60) this.setCheckpoint(cx);
+    });
+    // urlo di sfondo (una volta, non blocca)
+    const sf = this.npcs.find(n => n.id === 'sfondo');
+    if (sf && !this.stato.dialoghiCompletati['sfondo'] && Math.abs(x - sf.x) < 420) {
+      this.completa('sfondo');
+      this.urloSfondo = 240;
+    }
+    if (this.urloSfondo > 0) this.urloSfondo--;
+  },
+
+  /* ==================================================================
+     RENDERING
+     ================================================================== */
+  draw() {
+    const ctx = this.ctx, cam = this.camera;
+    ctx.save();
+    ctx.clearRect(0, 0, VIEW_W, VIEW_H);
+
+    // shake
+    const sx = this.shake > 0 ? rnd(-this.shake / 2, this.shake / 2) : 0;
+    const sy = this.shake > 0 ? rnd(-this.shake / 2, this.shake / 2) : 0;
+
+    // spritz: oscillazione leggera
+    const wob = this.spritz > 0 ? Math.sin(this.frame * .03) * 3 * this.spritz : 0;
+
+    this.disegnaCielo(ctx);
+    ctx.save();
+    ctx.translate(-cam.x + sx, -cam.y + sy + wob);
+    this.disegnaParallasse(ctx);
+    this.disegnaDecor(ctx);
+    this.disegnaTerreno(ctx);
+    this.disegnaTrappole(ctx);
+    this.disegnaMonete(ctx);
+    this.disegnaNPC(ctx);
+    this.disegnaPlayer(ctx);
+    this.disegnaParticelle(ctx);
+    ctx.restore();
+
+    this.disegnaLuce(ctx);
+    this.disegnaHUD(ctx);
+    this.disegnaDialogo(ctx);
+
+    if (this.spritz > 0.05) this.disegnaSpritz(ctx);
+    if (this.flashSchermo > 0) {
+      ctx.fillStyle = 'rgba(255,220,120,' + (this.flashSchermo / 160) + ')';
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    }
+    ctx.restore();
+  },
+
+  disegnaCielo(ctx) {
+    const l = this.tempoLuce;
+    const topo = [['#ff9a4d', '#ffd98a'], ['#e2622f', '#ffb069'], ['#7a3a6b', '#e0705a'], ['#221a4d', '#4b3a86'], ['#0b1030', '#1d2450'], ['#050818', '#131a3a']];
+    const idx = Math.min(5, Math.floor(l * 5));
+    const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+    g.addColorStop(0, topo[idx][0]);
+    g.addColorStop(1, topo[idx][1]);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // sole/luna
+    const px = 780 - this.camera.x * .03;
+    ctx.globalAlpha = .9;
+    ctx.fillStyle = l < .5 ? '#fff0a8' : '#cfe0ff';
+    ctx.beginPath(); ctx.arc(px, 150 + l * 60, 34, 0, 6.28); ctx.fill();
+    ctx.globalAlpha = 1;
+    // stelle di notte
+    if (l > .6) {
+      ctx.globalAlpha = (l - .6) * 2.5;
+      ctx.fillStyle = '#fff';
+      for (let i = 0; i < 70; i++) {
+        const x = (i * 137.5) % VIEW_W, y = (i * 71.3) % 260;
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+  },
+
+  disegnaParallasse(ctx) {
+    const cam = this.camera;
+    // palazzi lontani
+    for (let i = 0; i < 3; i++) {
+      const par = .25 + i * .18;
+      const off = cam.x * par;
+      ctx.globalAlpha = .35 + i * .18;
+      ctx.fillStyle = ['#4a3560', '#3a2a52', '#2a1e40'][i];
+      for (let x = -400; x < MAP_END; x += 220 + i * 40) {
+        const h = 130 + ((x * 13 + i * 90) % 200);
+        const px = x - off;
+        if (px > -250 && px < VIEW_W + 250) ctx.fillRect(px, SUOLO - h, 170, h + 60);
+        // finestre illuminate di notte
+        if (this.tempoLuce > .4) {
+          ctx.fillStyle = 'rgba(255,214,120,.45)';
+          for (let wy = SUOLO - h + 14; wy < SUOLO - 10; wy += 26) {
+            for (let wx = px + 12; wx < px + 150; wx += 30) {
+              if (((wx + wy + i * 7) | 0) % 3 === 0) ctx.fillRect(wx, wy, 10, 14);
+            }
+          }
+          ctx.fillStyle = ['#4a3560', '#3a2a52', '#2a1e40'][i];
+        }
+      }
+      // tetti / insegne della fascia
+      ctx.fillStyle = ['#5a4272', '#48325f', '#36254a'][i];
+      for (let x = -200; x < MAP_END; x += 300) {
+        const px = x - off;
+        if (px > -300 && px < VIEW_W + 300) ctx.fillRect(px, SUOLO - 140 - i * 20, 120, 160);
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  disegnaDecor(ctx) {
+    Level.decor.forEach(d => {
+      if (d.x < this.camera.x - 200 || d.x > this.camera.x + VIEW_W + 200) return;
+      if (d.t === 'palazzo') {
+        const c = ['#3b2b4e', '#33254a', '#2b2044'][d.c];
+        ctx.fillStyle = c;
+        ctx.fillRect(d.x, SUOLO - d.h, 240, d.h + 40);
+        ctx.fillStyle = 'rgba(0,0,0,.25)';
+        ctx.fillRect(d.x, SUOLO - d.h, 240, 10);
+        const lit = this.tempoLuce;
+        for (let y = SUOLO - d.h + 20; y < SUOLO - 10; y += 34) {
+          for (let x = d.x + 16; x < d.x + 220; x += 42) {
+            const on = ((x * 7 + y * 3) | 0) % 4 !== 0;
+            ctx.fillStyle = on && lit > .25 ? 'rgba(255,206,110,' + (0.35 + lit * .5) + ')' : 'rgba(20,14,32,.85)';
+            ctx.fillRect(x, y, 22, 24);
+          }
+        }
+        // insegna
+        ctx.fillStyle = lit > .5 ? '#ff6b9d' : '#ff8a3d';
+        ctx.fillRect(d.x + 40, SUOLO - d.h - 18, 90, 16);
+      } else if (d.t === 'lampione') {
+        ctx.fillStyle = '#22303f';
+        ctx.fillRect(d.x, SUOLO - 170, 6, 170);
+        const glow = this.tempoLuce;
+        ctx.fillStyle = glow > .4 ? 'rgba(255,214,140,.9)' : 'rgba(120,110,90,.6)';
+        ctx.beginPath(); ctx.arc(d.x + 3, SUOLO - 174, 8, 0, 6.28); ctx.fill();
+        if (glow > .4) {
+          const g = ctx.createRadialGradient(d.x + 3, SUOLO - 174, 0, d.x + 3, SUOLO - 174, 90);
+          g.addColorStop(0, 'rgba(255,214,140,.30)');
+          g.addColorStop(1, 'rgba(255,214,140,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(d.x + 3, SUOLO - 174, 90, 0, 6.28); ctx.fill();
+        }
+      } else if (d.t === 'insegna') {
+        ctx.save();
+        ctx.translate(d.x, 250);
+        ctx.fillStyle = 'rgba(10,6,20,.55)';
+        ctx.fillRect(-6, -22, 12, 60);
+        ctx.fillStyle = this.tempoLuce > .5 ? '#5ef2ff' : '#ffd34d';
+        ctx.fillRect(-70, -34, 140, 26);
+        ctx.fillStyle = '#101018'; ctx.font = 'bold 15px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(d.txt, 0, -15);
+        ctx.textAlign = 'left';
+        ctx.restore();
+      }
+    });
+  },
+
+  disegnaTerreno(ctx) {
+    Level.ground.forEach(g => {
+      if (g.x + g.w < this.camera.x - 100 || g.x > this.camera.x + VIEW_W + 100) return;
+      if (g.y > 600) { ctx.fillStyle = '#101426'; ctx.fillRect(g.x, g.y, g.w, g.h); return; }
+      ctx.fillStyle = '#2b2b3d';
+      ctx.fillRect(g.x, g.y, g.w, g.h + 200);
+      ctx.fillStyle = '#3a3a52';
+      ctx.fillRect(g.x, g.y, g.w, 10);
+      // marciapiede
+      ctx.fillStyle = '#4a4a63';
+      ctx.fillRect(g.x, g.y - 6, g.w, 6);
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      for (let x = g.x; x < g.x + g.w; x += 40) ctx.fillRect(x, g.y + 14, 2, 40);
+    });
+    Level.muri.forEach(m => {
+      if (m.x + m.w < this.camera.x - 100 || m.x > this.camera.x + VIEW_W + 100) return;
+      ctx.fillStyle = '#4a3a30';
+      ctx.fillRect(m.x, m.y, m.w, m.h);
+      ctx.fillStyle = 'rgba(255,255,255,.12)';
+      ctx.fillRect(m.x, m.y, m.w, 5);
+      ctx.fillStyle = 'rgba(0,0,0,.22)';
+      ctx.fillRect(m.x + m.w - 5, m.y, 5, m.h);
+    });
+    Level.platform.forEach(p => {
+      if (p.x + p.w < this.camera.x - 100 || p.x > this.camera.x + VIEW_W + 100) return;
+      ctx.fillStyle = '#6b5230';
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+      ctx.fillStyle = '#8a6c40';
+      ctx.fillRect(p.x, p.y, p.w, 5);
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      for (let x = p.x + 8; x < p.x + p.w - 6; x += 18) ctx.fillRect(x, p.y + 6, 3, 8);
+    });
+    // buche
+    Level.buche.forEach(b => {
+      if (b.x + b.w < this.camera.x - 100 || b.x > this.camera.x + VIEW_W + 100) return;
+      ctx.fillStyle = '#080a16';
+      ctx.fillRect(b.x, SUOLO, b.w, 90);
+    });
+  },
+
+  disegnaTrappole(ctx) {
+    Level.traps.forEach(t => {
+      if (t.ty === 'auto') {
+        if (t.x < this.camera.x - 200 || t.x > this.camera.x + VIEW_W + 200) return;
+        ctx.fillStyle = ['#c0392b', '#2e7dbd', '#d7a021', '#5b8f3a'][(t.start | 0) % 4];
+        ctx.fillRect(t.x, SUOLO + 30, 70, 30);
+        ctx.fillStyle = '#dfe6ef';
+        ctx.fillRect(t.x + 10, SUOLO + 22, 48, 12);
+        ctx.fillStyle = '#101820';
+        ctx.beginPath(); ctx.arc(t.x + 14, SUOLO + 62, 8, 0, 6.28); ctx.fill();
+        ctx.beginPath(); ctx.arc(t.x + 56, SUOLO + 62, 8, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#ffe58a';
+        ctx.fillRect(t.x + 62, SUOLO + 34, 8, 6);
+      } else {
+        if (t.x < this.camera.x - 100 || t.x > this.camera.x + VIEW_W + 100) return;
+        // pedone ostile con naso esagerato, appoggiato al marciapiede
+        const bob = Math.sin(this.frame * .07 + t.x) * 2;
+        ctx.fillStyle = '#3d5a80';
+        ctx.fillRect(t.x - 12, SUOLO - 45 + bob, 24, 34);
+        ctx.fillStyle = '#e8b48c';
+        ctx.beginPath(); ctx.arc(t.x, SUOLO - 58 + bob, 12, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#d98f68';
+        ctx.beginPath();
+        ctx.moveTo(t.x, SUOLO - 58 + bob); ctx.lineTo(t.x + 30, SUOLO - 64 + bob); ctx.lineTo(t.x, SUOLO - 50 + bob);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(t.x - 12, SUOLO - 62 + bob, 5, 4);
+        ctx.fillRect(t.x + 6, SUOLO - 62 + bob, 5, 4);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(t.x - 11, SUOLO - 61 + bob, 3, 3);
+        ctx.fillRect(t.x + 7, SUOLO - 61 + bob, 3, 3);
+      }
+    });
+  },
+
+  disegnaMonete(ctx) {
+    Monete.lista.forEach(m => {
+      if (m.presa) return;
+      if (m.x < this.camera.x - 60 || m.x > this.camera.x + VIEW_W + 60) return;
+      const s = Math.abs(Math.cos(m.t));
+      const y = m.y + Math.sin(m.t * .8) * 4;
+      ctx.save();
+      ctx.translate(m.x, y);
+      const w = 4 + s * 11;
+      // alone per le monete in quota (devono essere ben visibili)
+      if (m.alta) {
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 34);
+        g.addColorStop(0, 'rgba(255,220,110,.55)');
+        g.addColorStop(1, 'rgba(255,220,110,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 34, 0, 6.28); ctx.fill();
+      }
+      ctx.fillStyle = '#b8862a';
+      ctx.beginPath(); ctx.ellipse(0, 0, w / 2, 13, 0, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#ffd34d';
+      ctx.beginPath(); ctx.ellipse(0, 0, Math.max(1, w / 2 - 2), 11, 0, 0, 6.28); ctx.fill();
+      if (s > .35) {
+        ctx.fillStyle = '#8a5a10';
+        ctx.font = 'bold 15px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('B', 0, 1);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
+      ctx.restore();
+    });
+    // monete volanti (furto)
+    this.moneteVolanti.forEach(m => {
+      ctx.fillStyle = '#ffd34d';
+      ctx.beginPath(); ctx.arc(m.x, m.y, 8, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#8a5a10'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center';
+      ctx.fillText('B', m.x, m.y + 4); ctx.textAlign = 'left';
+    });
+  },
+
+  /* --------------------------------------------------------- ritratti */
+  disegnaNPC(ctx) {
+    if (!this.player) return;                 // il giocatore non esiste ancora
+    this.npcs.forEach(n => {
+      if (n.x < this.camera.x - 160 || n.x > this.camera.x + VIEW_W + 160) return;
+      ctx.save();
+      if (n.fantasma > 0) ctx.globalAlpha = 1 - n.fantasma;
+      switch (n.tipo) {
+        case 'faz': this.npcUmano(ctx, n, '#1a1a1a', '#111', '#2b3a55', 'occhiali', 'neri'); break;
+        case 'aladino': this.npcUmano(ctx, n, '#5b3a1e', '#2f7d4f', '#3b2f1e', 'normale', 'cap'); break;
+        case 'tony': this.npcUmano(ctx, n, '#c9975e', '#c0392b', '#22303f', 'normale', 'pelato'); break;
+        case 'consy': this.npcPiccolo(ctx, n, '#e0b48a', '#3a6ea5'); break;
+        case 'kesor': this.npcSeduto(ctx, n, '#b5764a', '#4a4a80'); break;
+        case 'pollo': this.npcSeduto(ctx, n, '#d0a070', '#7a4a2a'); break;
+        case 'justsciv': this.npcSeduto(ctx, n, '#c08a60', '#2f6f4f'); break;
+        case 'q71': this.npcSeduto(ctx, n, '#d8b088', '#a03a5a'); break;
+        case 'tv': this.npcTV(ctx, n); break;
+        case 'trombizio': this.npcTrombizio(ctx, n); break;
+        case 'bbq': this.npcBBQ(ctx, n); break;
+        case 'sfondo': this.npcSfondo(ctx, n); break;
+        case 'paddone': this.npcPaddone(ctx, n); break;
+        case 'spaccino': this.npcUmano(ctx, n, '#c98f66', '#8a5a1c', '#2b2b3d', 'normale', 'cap'); break;
+        case 'eddie': this.npcUmano(ctx, n, '#e0b48a', '#3a7d5a', '#22283a', 'normale', 'barba'); break;
+        case 'silenzioso': this.npcSilenzioso(ctx, n); break;
+        case 'shyde': this.npcUmano(ctx, n, '#d6a878', '#6b3f8a', '#1e2440', 'normale', 'cap'); break;
+        case 'marcolino': this.npcMarcolino(ctx, n); break;
+      }
+      ctx.restore();
+      // indicatore E
+      if (!n.decorativo && !n.fantasma && this.player && Math.abs(n.x - this.player.cx) < n.range) {
+        const bob = Math.sin(this.frame * .12) * 4;
+        ctx.fillStyle = '#ffd34d';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(n.x - 16, n.y - 96 + bob, 34, 28, 6) : ctx.rect(n.x - 16, n.y - 96 + bob, 34, 28);
+        ctx.fill();
+        ctx.fillStyle = '#1b1030'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+        ctx.fillText('E', n.x + 1, n.y - 76 + bob);
+        ctx.textAlign = 'left';
+      }
+    });
+  },
+  npcUmano(ctx, n, pelle, maglia, pant, extra, capelli) {
+    const bob = Math.sin(n.t * 2) * 1.5;
+    const y = n.y + bob;
+    ctx.fillStyle = pant; ctx.fillRect(n.x - 11, y - 26, 22, 26);
+    ctx.fillStyle = maglia; ctx.fillRect(n.x - 13, y - 52, 26, 28);
+    ctx.fillStyle = pelle;
+    ctx.beginPath(); ctx.arc(n.x, y - 62, 13, 0, 6.28); ctx.fill();
+    // capelli
+    ctx.fillStyle = '#1c1c1c';
+    if (capelli === 'neri') { ctx.beginPath(); ctx.arc(n.x, y - 66, 13, Math.PI, 0); ctx.fill(); ctx.fillRect(n.x - 13, y - 68, 26, 7); }
+    if (capelli === 'pelato') { ctx.fillRect(n.x - 13, y - 70, 26, 5); ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(n.x - 6, y - 74, 12, 4); }
+    if (capelli === 'cap') { ctx.fillStyle = maglia; ctx.beginPath(); ctx.arc(n.x, y - 66, 14, Math.PI, 0); ctx.fill(); ctx.fillRect(n.x - 16, y - 68, 32, 6); }
+    if (capelli === 'barba') { ctx.fillStyle = '#222'; ctx.fillRect(n.x - 9, y - 56, 18, 8); }
+    // occhi
+    ctx.fillStyle = '#fff'; ctx.fillRect(n.x - 7, y - 65, 5, 5); ctx.fillRect(n.x + 2, y - 65, 5, 5);
+    ctx.fillStyle = '#000'; ctx.fillRect(n.x - 6, y - 64, 3, 3); ctx.fillRect(n.x + 3, y - 64, 3, 3);
+    if (extra === 'occhiali') {
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+      ctx.strokeRect(n.x - 9, y - 67, 8, 8); ctx.strokeRect(n.x + 1, y - 67, 8, 8);
+      ctx.beginPath(); ctx.moveTo(n.x - 1, y - 63); ctx.lineTo(n.x + 1, y - 63); ctx.stroke();
+    }
+    // braccia
+    ctx.fillStyle = pelle;
+    ctx.fillRect(n.x - 17, y - 48, 5, 18); ctx.fillRect(n.x + 12, y - 48, 5, 18);
+  },
+  npcPiccolo(ctx, n, pelle, maglia) {
+    const bob = Math.sin(n.t * 2.4) * 2;
+    const y = n.y + bob;
+    ctx.fillStyle = '#2a3550'; ctx.fillRect(n.x - 8, y - 18, 16, 18);
+    ctx.fillStyle = maglia; ctx.fillRect(n.x - 10, y - 38, 20, 22);
+    ctx.fillStyle = pelle; ctx.beginPath(); ctx.arc(n.x, y - 45, 11, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(n.x, y - 49, 11, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(n.x - 6, y - 47, 4, 4); ctx.fillRect(n.x + 2, y - 47, 4, 4);
+    ctx.fillStyle = '#000'; ctx.fillRect(n.x - 5, y - 46, 2, 2); ctx.fillRect(n.x + 3, y - 46, 2, 2);
+  },
+  npcSeduto(ctx, n, pelle, maglia) {
+    const y = n.y;
+    ctx.fillStyle = '#2b2b3d'; ctx.fillRect(n.x - 16, y - 14, 34, 14);
+    ctx.fillStyle = maglia; ctx.fillRect(n.x - 12, y - 46, 26, 34);
+    ctx.fillStyle = pelle; ctx.beginPath(); ctx.arc(n.x, y - 56, 13, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#20201c'; ctx.beginPath(); ctx.arc(n.x, y - 60, 13, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fff';
+    const eo = Math.sin(n.t * 1.4) * 2;
+    ctx.fillRect(n.x - 7 + eo, y - 59, 5, 5); ctx.fillRect(n.x + 2 + eo, y - 59, 5, 5);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(n.x - 6 + eo, y - 58, 3, 3); ctx.fillRect(n.x + 3 + eo, y - 58, 3, 3);
+    // bocca aperta
+    ctx.fillStyle = '#7a2020';
+    ctx.fillRect(n.x - 4, y - 49, 8, 4 + Math.abs(Math.sin(n.t * 3)) * 4);
+    // braccio verso la TV
+    ctx.fillStyle = pelle; ctx.fillRect(n.x + 12, y - 46, 16, 5);
+  },
+  npcTV(ctx, n) {
+    const flick = Math.sin(this.frame * .9) * .2 + .8;
+    ctx.fillStyle = '#12141f';
+    ctx.fillRect(n.x - 40, n.y - 52, 84, 54);
+    ctx.fillStyle = 'rgba(120,190,255,' + flick + ')';
+    ctx.fillRect(n.x - 34, n.y - 46, 72, 42);
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fillRect(n.x - 34, n.y - 46 + Math.sin(this.frame * .2) * 10 + 10, 72, 4);
+    ctx.fillStyle = '#12141f'; ctx.fillRect(n.x - 4, n.y, 8, 16);
+  },
+  npcTrombizio(ctx, n) {
+    const y = n.y;
+    ctx.fillStyle = '#20222e'; ctx.fillRect(n.x - 12, y - 26, 24, 26);
+    ctx.fillStyle = '#30384f'; ctx.fillRect(n.x - 14, y - 54, 28, 30);
+    ctx.fillStyle = '#e8b48c'; ctx.beginPath(); ctx.arc(n.x, y - 64, 13, 0, 6.28); ctx.fill();
+    // naso GIGANTESCO
+    ctx.fillStyle = '#d98f68';
+    ctx.beginPath();
+    ctx.moveTo(n.x - 3, y - 66); ctx.lineTo(n.x + 34, y - 58); ctx.lineTo(n.x - 3, y - 54);
+    ctx.fill();
+    ctx.strokeStyle = '#a86646'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(n.x - 3, y - 66); ctx.lineTo(n.x + 34, y - 58); ctx.lineTo(n.x - 3, y - 54); ctx.stroke();
+    // occhiali
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+    ctx.strokeRect(n.x - 11, y - 70, 10, 9); ctx.strokeRect(n.x + 1, y - 70, 10, 9);
+    ctx.beginPath(); ctx.moveTo(n.x - 1, y - 66); ctx.lineTo(n.x + 1, y - 66); ctx.stroke();
+    ctx.fillStyle = '#1c1c1c'; ctx.beginPath(); ctx.arc(n.x, y - 70, 13, Math.PI, 0); ctx.fill();
+    // giacca + cravatta da finto broker
+    ctx.fillStyle = '#b03030'; ctx.fillRect(n.x - 3, y - 54, 6, 26);
+    ctx.fillStyle = '#0d0d12';
+    ctx.fillRect(n.x - 14, y - 54, 6, 30); ctx.fillRect(n.x + 8, y - 54, 6, 30);
+  },
+  npcBBQ(ctx, n) {
+    const y = n.y;
+    ctx.fillStyle = '#3a3a3a'; ctx.fillRect(n.x + 18, y - 26, 34, 26);
+    ctx.fillStyle = '#ff6a1a'; ctx.fillRect(n.x + 22, y - 30, 26, 6);
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = 'rgba(255,140,40,' + (.3 + Math.random() * .5) + ')';
+      ctx.beginPath(); ctx.arc(n.x + 26 + i * 9, y - 44 - Math.random() * 14, 7, 0, 6.28); ctx.fill();
+    }
+    ctx.fillStyle = '#2a3550'; ctx.fillRect(n.x - 12, y - 26, 24, 26);
+    ctx.fillStyle = '#6b5a3a'; ctx.fillRect(n.x - 14, y - 54, 28, 30);
+    ctx.fillStyle = '#e8b48c'; ctx.beginPath(); ctx.arc(n.x, y - 64, 13, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#4a3a20'; ctx.fillRect(n.x - 15, y - 72, 30, 14);
+    ctx.fillRect(n.x - 15, y - 60, 6, 22); ctx.fillRect(n.x + 9, y - 60, 6, 22);
+    ctx.fillStyle = '#fff'; ctx.fillRect(n.x - 7, y - 67, 5, 5); ctx.fillRect(n.x + 2, y - 67, 5, 5);
+    ctx.fillStyle = '#000'; ctx.fillRect(n.x - 6, y - 66, 3, 3); ctx.fillRect(n.x + 3, y - 66, 3, 3);
+  },
+  npcSfondo(ctx, n) {
+    const y = n.y + Math.sin(n.t * 3) * 6;
+    ctx.globalAlpha = .85;
+    ctx.fillStyle = '#5a2d2d'; ctx.fillRect(n.x - 12, y - 44, 24, 44);
+    ctx.fillStyle = '#c98f66'; ctx.beginPath(); ctx.arc(n.x, y - 54, 12, 0, 6.28); ctx.fill();
+    // braccia al cielo
+    ctx.fillRect(n.x - 22, y - 74, 6, 30); ctx.fillRect(n.x + 16, y - 74, 6, 30);
+    ctx.fillStyle = '#222'; ctx.fillRect(n.x - 6, y - 56, 4, 3); ctx.fillRect(n.x + 2, y - 56, 4, 3);
+    ctx.globalAlpha = 1;
+    if (this.urloSfondo > 0) {
+      // balloon di sfondo, non blocca il movimento
+      ctx.fillStyle = 'rgba(255,255,255,.94)';
+      const bx = n.x - 210, by = n.y - 160, bw = 420, bh = 96;
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.beginPath(); ctx.moveTo(n.x - 10, by + bh); ctx.lineTo(n.x + 10, by + bh); ctx.lineTo(n.x, by + bh + 18); ctx.fill();
+      ctx.fillStyle = '#7a1010'; ctx.font = 'bold 13px Arial';
+      this.testoRighe(ctx, DIALOGHI.sfondo.urlo, bx + 12, by + 24, bw - 24, 17);
+    }
+  },
+  npcPaddone(ctx, n) {
+    const y = n.y;
+    // bancarella con giacche
+    ctx.fillStyle = '#4a3a2a'; ctx.fillRect(n.x + 26, y - 60, 90, 8);
+    ctx.fillRect(n.x + 30, y - 52, 6, 52); ctx.fillRect(n.x + 106, y - 52, 6, 52);
+    const colori = ['#7a3030', '#30507a', '#3a6a3a'];
+    colori.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(n.x + 34 + i * 28, y - 84, 20, 24); });
+    ctx.fillStyle = '#3a3a4a'; ctx.fillRect(n.x - 12, y - 26, 24, 26);
+    ctx.fillStyle = '#8a5a1c'; ctx.fillRect(n.x - 14, y - 54, 28, 30);
+    ctx.fillStyle = '#e8b48c'; ctx.beginPath(); ctx.arc(n.x, y - 64, 13, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#20201c'; ctx.beginPath(); ctx.arc(n.x, y - 68, 13, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(n.x - 7, y - 67, 5, 5); ctx.fillRect(n.x + 2, y - 67, 5, 5);
+    ctx.fillStyle = '#000'; ctx.fillRect(n.x - 6, y - 66, 3, 3); ctx.fillRect(n.x + 3, y - 66, 3, 3);
+  },
+  npcSilenzioso(ctx, n) {
+    const y = n.y + Math.sin(n.t * 1.6) * 1.5;
+    ctx.fillStyle = '#2b3550'; ctx.fillRect(n.x - 11, y - 26, 22, 26);
+    ctx.fillStyle = '#e8e8e8'; ctx.fillRect(n.x - 13, y - 52, 26, 28);
+    ctx.fillStyle = '#4a3220'; ctx.beginPath(); ctx.arc(n.x, y - 62, 13, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#101010'; ctx.beginPath(); ctx.arc(n.x, y - 66, 13, Math.PI, 0); ctx.fill();
+    // occhiali da sole: nessuna battuta, nessuno sguardo
+    ctx.fillStyle = '#111'; ctx.fillRect(n.x - 11, y - 66, 22, 7);
+  },
+  npcMarcolino(ctx, n) {
+    const y = n.y + Math.sin(n.t * 2) * 2;
+    // insegna
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillRect(n.x - 46, y - 108, 96, 26);
+    ctx.fillStyle = '#7a1010'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('BALLÈR', n.x + 2, y - 90);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#2a2440'; ctx.fillRect(n.x - 12, y - 26, 24, 26);
+    ctx.fillStyle = '#ffd34d'; ctx.fillRect(n.x - 15, y - 56, 30, 32);
+    ctx.fillStyle = '#e8b48c'; ctx.beginPath(); ctx.arc(n.x, y - 66, 13, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#e8e8e8'; ctx.beginPath(); ctx.arc(n.x, y - 70, 13, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(n.x - 7, y - 69, 5, 5); ctx.fillRect(n.x + 2, y - 69, 5, 5);
+    ctx.fillStyle = '#000'; ctx.fillRect(n.x - 6, y - 68, 3, 3); ctx.fillRect(n.x + 3, y - 68, 3, 3);
+    // mani che regge il timbro
+    ctx.fillStyle = '#8a5a1c'; ctx.fillRect(n.x + 12, y - 44, 18, 12);
+  },
+
+  /* ---------------------------------------------------------- player */
+  disegnaPlayer(ctx) {
+    const p = this.player;
+    if (!p) return;                           // nessuna partita in corso
+    if (p.inv > 0 && Math.floor(this.frame / 4) % 2 === 0 && !p.morto) return;
+    ctx.save();
+    ctx.translate(p.cx, p.y + p.h);
+    ctx.scale(p.facing, 1);
+    const t = p.animType;
+    const bob = t === 'run' ? Math.sin(p.anim * 3) * 2 : (t === 'idle' ? Math.sin(p.anim) * 1.2 : 0);
+    // jetpack zaino
+    if (this.stato.jetpack) {
+      ctx.fillStyle = '#6b6b7a';
+      ctx.fillRect(-16, -46 + bob, 8, 20);
+      ctx.fillStyle = '#ffd34d';
+      ctx.fillRect(-16, -28 + bob, 8, 5);
+    }
+    // gambe
+    ctx.fillStyle = '#20263a';
+    const passo = t === 'run' ? Math.sin(p.anim * 3) * 7 : 0;
+    ctx.fillRect(-9 + passo, -18, 8, 18);
+    ctx.fillRect(2 - passo, -18, 8, 18);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(-9 + passo, -4, 8, 4); ctx.fillRect(2 - passo, -4, 8, 4);
+    // corpo: felpa con "B"
+    ctx.fillStyle = p.arrabbiato > 0 ? '#c0392b' : '#e0602a';
+    ctx.fillRect(-13, -46 + bob, 26, 30);
+    ctx.fillStyle = '#ffd34d';
+    ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('B', 0, -26 + bob);
+    ctx.textAlign = 'left';
+    // testa
+    ctx.fillStyle = '#e8b48c';
+    ctx.beginPath(); ctx.arc(0, -56 + bob, 13, 0, 6.28); ctx.fill();
+    // capelli
+    ctx.fillStyle = '#2a1a10';
+    ctx.beginPath(); ctx.arc(0, -60 + bob, 13, Math.PI, 0); ctx.fill();
+    ctx.fillRect(-13, -62 + bob, 26, 6);
+    // occhi: arrabbiato se Trombizio ha rubato
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-8, -59 + bob, 6, 6); ctx.fillRect(1, -59 + bob, 6, 6);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-6, -57 + bob, 3, 3); ctx.fillRect(3, -57 + bob, 3, 3);
+    if (p.arrabbiato > 0) {
+      ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-9, -64 + bob); ctx.lineTo(-2, -60 + bob); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(9, -64 + bob); ctx.lineTo(2, -60 + bob); ctx.stroke();
+      ctx.fillStyle = '#7a1010'; ctx.fillRect(-5, -50 + bob, 10, 4);
+    } else {
+      ctx.strokeStyle = '#8a5a3a'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-5, -50 + bob); ctx.lineTo(5, -50 + bob); ctx.stroke();
+    }
+    // braccia
+    ctx.fillStyle = '#e8b48c';
+    if (t === 'run') { ctx.fillRect(-17, -42 + bob - passo / 2, 6, 16); ctx.fillRect(11, -42 + bob + passo / 2, 6, 16); }
+    else if (t === 'jet') { ctx.fillRect(-19, -50 + bob, 6, 14); ctx.fillRect(13, -50 + bob, 6, 14); }
+    else { ctx.fillRect(-17, -42 + bob, 6, 18); ctx.fillRect(11, -42 + bob, 6, 18); }
+    // fiamma jetpack
+    if (p.jetOn) {
+      ctx.fillStyle = Math.random() < .5 ? '#ffdd55' : '#ff7722';
+      ctx.beginPath();
+      ctx.moveTo(-14, -22); ctx.lineTo(-10, -22 + 26 + Math.random() * 12); ctx.lineTo(-6, -22);
+      ctx.fill();
+    }
+    ctx.restore();
+    // freccia indicatrice sopra il personaggio: non si perde mai di vista
+    const px = p.cx, py = p.y - 16 + Math.sin(this.frame * .1) * 3;
+    ctx.fillStyle = 'rgba(255,211,77,.95)';
+    ctx.beginPath();
+    ctx.moveTo(px, py + 10); ctx.lineTo(px - 9, py - 6); ctx.lineTo(px + 9, py - 6);
+    ctx.fill();
+    ctx.strokeStyle = '#1b1030'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(px, py + 10); ctx.lineTo(px - 9, py - 6); ctx.lineTo(px + 9, py - 6); ctx.closePath();
+    ctx.stroke();
+  },
+
+  disegnaParticelle(ctx) {
+    this.particelle.forEach(p => {
+      ctx.globalAlpha = clamp(p.l / 26, 0, 1);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(p.x, p.y, 4, 4);
+    });
+    ctx.globalAlpha = 1;
+  },
+
+  disegnaLuce(ctx) {
+    if (this.tempoLuce <= .05) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    const alpha = this.tempoLuce * .55;
+    ctx.fillStyle = 'rgba(90,110,200,' + alpha + ')';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.restore();
+    // vignettatura notturna
+    if (this.tempoLuce > .5) {
+      const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 120, VIEW_W / 2, VIEW_H / 2, 620);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,20,' + ((this.tempoLuce - .5) * 1.1) + ')');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    }
+  },
+
+  disegnaSpritz(ctx) {
+    // sfocatura simulata: strati traslati e sovrapposti
+    const s = this.spritz;
+    ctx.save();
+    ctx.globalAlpha = s * .22;
+    for (let i = 1; i <= 3; i++) {
+      ctx.drawImage(this.canvas, rnd(-3, 3) * s, rnd(-2, 2) * s, VIEW_W, VIEW_H);
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,120,60,' + (s * .07) + ')';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  },
+
+  /* -------------------------------------------------------------- HUD */
+  disegnaHUD(ctx) {
+    const st = this.stato;
+    if (!st) return;
+    // barra vita
+    ctx.fillStyle = 'rgba(8,6,18,.72)';
+    ctx.fillRect(14, 14, 268, 58);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial';
+    ctx.fillText('VITA', 24, 34);
+    ctx.fillStyle = '#3a1020'; ctx.fillRect(78, 22, 190, 16);
+    const hp = this.player ? this.player.hp : MAX_HP;
+    const hpw = 190 * (hp / MAX_HP);
+    const col = hp > 55 ? '#4ce07a' : hp > 25 ? '#ffd34d' : '#ff4466';
+    ctx.fillStyle = col; ctx.fillRect(78, 22, hpw, 16);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(78, 22, 190, 16);
+    // monete
+    ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 18px Arial';
+    ctx.fillText('Ballèr Coins: ' + st.moneteWorld + '/' + MONETE_TOTALI, 24, 62);
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.font = '13px Arial';
+    ctx.fillText('saldo: ' + st.possesso + (st.trombizio ? '  (10 rubate da Trombizio)' : ''), 176, 62);
+
+    // obiettivo
+    ctx.fillStyle = 'rgba(8,6,18,.72)';
+    const obw = ctx.measureText(this.obiettivo).width;
+    ctx.fillRect(VIEW_W / 2 - 250, 14, 500, 30);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Arial'; ctx.textAlign = 'center';
+    ctx.fillText(this.obiettivo, VIEW_W / 2, 34);
+    ctx.textAlign = 'left';
+
+    // jetpack
+    if (st.jetpack) {
+      ctx.fillStyle = 'rgba(8,6,18,.72)'; ctx.fillRect(VIEW_W - 190, 14, 176, 34);
+      ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 15px Arial';
+      ctx.fillText('🚀 JETPACK ATTIVO', VIEW_W - 176, 37);
+    }
+    // hint
+    if (this.hintT > 0 && this.hint) {
+      ctx.globalAlpha = clamp(this.hintT / 50, 0, 1);
+      ctx.fillStyle = 'rgba(8,6,18,.8)';
+      ctx.fillRect(VIEW_W / 2 - 330, VIEW_H - 72, 660, 44);
+      ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+      ctx.fillText(this.hint, VIEW_W / 2, VIEW_H - 44);
+      ctx.textAlign = 'left';
+      ctx.globalAlpha = 1;
+    }
+    // spritz
+    if (this.spritz > .05) {
+      ctx.fillStyle = 'rgba(8,6,18,.7)'; ctx.fillRect(14, 82, 210, 26);
+      ctx.fillStyle = '#ff9a5d'; ctx.font = 'bold 14px Arial';
+      ctx.fillText('🍹 SPRITZ x' + Math.round(this.spritz * 5), 24, 100);
+    }
+    // dissolvenza morte
+    if (this.player && this.player.morto) {
+      ctx.fillStyle = 'rgba(0,0,0,' + clamp(this.player.morteT / 70, 0, .75) + ')';
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 34px Arial'; ctx.textAlign = 'center';
+      ctx.fillText('T\'HANNO STESO', VIEW_W / 2, VIEW_H / 2);
+      ctx.font = '18px Arial';
+      ctx.fillText('Respawn al checkpoint...', VIEW_W / 2, VIEW_H / 2 + 36);
+      ctx.textAlign = 'left';
+    }
+  },
+
+  /* ---------------------------------------------------------- dialogo */
+  disegnaDialogo(ctx) {
+    const d = Dialoghi.attivo;
+    if (!d || d.chiuso) return;
+    const riga = d.righe[d.i];
+    if (!riga) return;
+    if (riga.scelta) return;                 // la scelta si disegna nel riquadro apposito
+    if (typeof riga.t !== 'string') return;  // niente testo: non si disegna
+    const shake = d.shake > 0 ? rnd(-3, 3) : 0;
+    const bw = 760, bh = riga.urlo ? 190 : 160;
+    const bx = (VIEW_W - bw) / 2 + shake, by = VIEW_H - bh - 26 + shake;
+    const alpha = this.spritz > .1 ? .93 : 1;
+
+    ctx.globalAlpha = alpha;
+    // balloon
+    ctx.fillStyle = 'rgba(14,10,26,.94)';
+    this.rect(ctx, bx, by, bw, bh, 14); ctx.fill();
+    ctx.strokeStyle = riga.urlo ? '#ff8a3d' : '#ffd34d'; ctx.lineWidth = 3;
+    this.rect(ctx, bx, by, bw, bh, 14); ctx.stroke();
+    // ritratto
+    ctx.fillStyle = '#241a3c';
+    this.rect(ctx, bx + 12, by + 12, 96, bh - 24, 10); ctx.fill();
+    this.ritratto(ctx, d.ritratto, bx + 60, by + bh / 2);
+    // nome
+    ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 18px Arial';
+    ctx.fillText(d.nome, bx + 124, by + 34);
+    // testo
+    const visibile = (riga.t || '').slice(0, Math.floor(d.testoVisibile || 0));
+    const size = riga.urlo ? 20 : riga.titolo ? 22 : riga.minuscolo ? 9 : 16;
+    ctx.fillStyle = riga.urlo ? '#ff9a5d' : '#fff';
+    ctx.font = (riga.urlo || riga.titolo ? 'bold ' : '') + size + 'px Arial';
+    this.testoRighe(ctx, visibile, bx + 124, by + 62, bw - 150, size + 8, riga.minuscolo);
+    // indicatore
+    if (d.testoVisibile >= riga.t.length && !d.inScelta) {
+      const bob = Math.sin(this.frame * .15) * 3;
+      ctx.fillStyle = '#ffd34d';
+      ctx.beginPath();
+      ctx.moveTo(bx + bw - 34, by + bh - 26 + bob);
+      ctx.lineTo(bx + bw - 18, by + bh - 26 + bob);
+      ctx.lineTo(bx + bw - 26, by + bh - 12 + bob);
+      ctx.fill();
+      ctx.font = '11px Arial'; ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ctx.textAlign = 'right';
+      ctx.fillText('INVIO / SPAZIO', bx + bw - 46, by + bh - 14);
+      ctx.textAlign = 'left';
+    }
+    // scelte
+    if (d.inScelta) {
+      const opz = d.opzioniVere && d.opzioniVere.length ? d.opzioniVere : d.opzioni;
+      const sw = 400, sh = 34 + opz.length * 40;
+      const sx = bx + bw - sw - 24, sy = by - sh - 12;
+      ctx.fillStyle = 'rgba(14,10,26,.96)';
+      this.rect(ctx, sx, sy, sw, sh, 12); ctx.fill();
+      ctx.strokeStyle = '#ff8a3d'; ctx.lineWidth = 3;
+      this.rect(ctx, sx, sy, sw, sh, 12); ctx.stroke();
+      ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 14px Arial';
+      ctx.fillText(d.scelte || 'Scegli', sx + 16, sy + 24);
+      opz.forEach((o, i) => {
+        const sel = i === d.selezionata;
+        ctx.fillStyle = sel ? '#ff8a3d' : 'rgba(255,255,255,.12)';
+        this.rect(ctx, sx + 12, sy + 34 + i * 40, sw - 24, 32, 8); ctx.fill();
+        ctx.fillStyle = sel ? '#1b1030' : '#fff'; ctx.font = 'bold 15px Arial';
+        ctx.fillText((sel ? '▶ ' : '  ') + o, sx + 22, sy + 56 + i * 40);
+      });
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '11px Arial';
+      ctx.fillText('↑ ↓ scegli · INVIO conferma', sx + 16, sy + sh - 8);
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  ritratto(ctx, tipo, cx, cy) {
+    ctx.save();
+    ctx.translate(cx, cy - 6);
+    ctx.fillStyle = '#e8b48c';
+    ctx.beginPath(); ctx.arc(0, 0, 30, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#2a1a10';
+    ctx.beginPath(); ctx.arc(0, -4, 30, Math.PI, 0); ctx.fill();
+    switch (tipo) {
+      case 'faz':
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.strokeRect(-20, -10, 16, 14); ctx.strokeRect(4, -10, 16, 14);
+        ctx.fillStyle = '#000'; ctx.fillRect(-16, -6, 8, 6); ctx.fillRect(8, -6, 8, 6);
+        break;
+      case 'trombizio':
+        ctx.fillStyle = '#d98f68';
+        ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(40, 16); ctx.lineTo(-4, 26); ctx.fill();
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.strokeRect(-22, -12, 18, 15); ctx.strokeRect(6, -12, 18, 15);
+        break;
+      case 'bbq':
+        ctx.fillStyle = '#4a3a20'; ctx.fillRect(-32, -18, 64, 22);
+        ctx.fillRect(-32, 0, 12, 30); ctx.fillRect(20, 0, 12, 30);
+        ctx.fillStyle = '#000'; ctx.fillRect(-14, -4, 8, 6); ctx.fillRect(8, -4, 8, 6);
+        break;
+      case 'marcolino':
+        ctx.fillStyle = '#e8e8e8'; ctx.beginPath(); ctx.arc(0, -6, 30, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.fillRect(-14, -4, 8, 6); ctx.fillRect(8, -4, 8, 6);
+        break;
+      default:
+        ctx.fillStyle = '#000'; ctx.fillRect(-14, -4, 8, 7); ctx.fillRect(8, -4, 8, 7);
+        ctx.fillStyle = '#7a2020'; ctx.fillRect(-8, 14, 18, 5);
+    }
+    ctx.restore();
+  },
+
+  rect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+    else ctx.rect(x, y, w, h);
+  },
+  /* testo con a capo automatico, non esce mai dal balloon */
+  testoRighe(ctx, testo, x, y, maxW, lh, minuscolo) {
+    if (minuscolo) ctx.font = '9px Arial';
+    const parole = testo.split(' ');
+    let riga = '', yy = y;
+    for (let i = 0; i < parole.length; i++) {
+      const prova = riga ? riga + ' ' + parole[i] : parole[i];
+      if (ctx.measureText(prova).width > maxW && riga) {
+        ctx.fillText(riga, x, yy);
+        riga = parole[i]; yy += lh;
+      } else riga = prova;
+    }
+    if (riga) ctx.fillText(riga, x, yy);
+    return yy;
+  },
+};
+
+/* ========================================================================
+   12. AVVIO
+   ======================================================================== */
+window.addEventListener('load', () => {
+  try {
+    if (typeof DIALOGHI === 'undefined') {
+      document.body.innerHTML = '<div style="padding:40px;font:16px/1.6 Arial;color:#ffd34d;background:#12102a">' +
+        '<h1>Manca il file dialoghi.js</h1>' +
+        '<p>Apri <b>index.html</b> tenendo i cinque file nella stessa cartella:<br>' +
+        'index.html · style.css · dialoghi.js · game.js · README.md</p></div>';
+      return;
+    }
+    Game.init();
+  } catch (err) {
+    console.error(err);
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;inset:0;background:#1b1030;color:#ffd44d;font:15px/1.6 monospace;padding:30px;z-index:99;overflow:auto';
+    d.innerHTML = '<h2>Errore in avvio</h2><pre>' + (err && err.message ? err.message : err) + '</pre>' +
+      '<p style="font-family:Arial">Copia questo messaggio e incollalo nella chat: lo sistemo.</p>';
+    document.body.appendChild(d);
+  }
+});
+window.addEventListener('beforeunload', () => { if (Game.stato && !Game.inMenu) Save.salva(Game.stato); });
+
+</script>
+</body>
+</html>
